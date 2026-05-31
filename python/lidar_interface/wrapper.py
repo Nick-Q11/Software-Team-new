@@ -58,5 +58,5 @@ class LidarSensor:
         distance = self.get_distance_of_zone(zone)
         return zone, distance
 
-    def print_debug_matrix(self):
+    def print_info_matrix(self):
         lidar_lib.printInfoSingle(self._c_ptr)
