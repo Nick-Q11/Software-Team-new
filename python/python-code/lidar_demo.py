@@ -1,6 +1,4 @@
 import asyncio
-
-
 import sys
 from pathlib import Path
 
@@ -28,11 +26,18 @@ async def autonomous(sensor: LidarSensor):
         await asyncio.sleep(0.05)
         if distance < 10:
             break
+        
+async def material_handling(sensor: LidarSensor):
+    print("Materialhandling started")
+    for i in range(5):
+        zone = sensor.get_zone_most_spads()
+        spads = sensor.get_spads_of_zone(zone)
+        print(f"Zone {zone} hat {spads} SPADs")
+    
 
 async def main():
-    print("Initialisiere LiDAR Sensor �ber C-Schnittstelle...")
+    print("Initialisiere LiDAR Sensor...")
     sensor = LidarSensor()
-    
   
     if sensor.init_and_calibrate() != 0:
         print("Kritischer Fehler: Sensor-Kalibrierung fehlgeschlagen!")
@@ -42,6 +47,7 @@ async def main():
     
   
     await autonomous(sensor)
+    
 
 if __name__ == "__main__":
     asyncio.run(main())

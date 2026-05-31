@@ -31,6 +31,24 @@ lidar_lib.getZoneClosestDistance.restype = ctypes.c_int
 lidar_lib.printInfoSingle.argtypes = [ctypes.c_void_p]
 lidar_lib.printInfoSingle.restype = ctypes.c_int
 
+lidar_lib.getZoneStrongestReflectance.argtypes = [ctypes.c_void_p]
+lidar_lib.getZoneStrongestReflectance.restype = ctypes.c_int
+
+lidar_lib.getZoneMostSpads.argtypes = [ctypes.c_void_p]
+lidar_lib.getZoneMostSpads.restype = ctypes.c_int
+
+lidar_lib.checkMaterial.argtypes = [ctypes.c_void_p, ctypes.c_int]
+lidar_lib.checkMaterial.restype = ctypes.c_bool
+
+lidar_lib.printInfoMultiple.argtypes = [ctypes.c_void_p, ctypes.c_int]
+lidar_lib.printInfoMultiple.restype = ctypes.c_int
+
+lidar_lib.get_ranging_data.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
+lidar_lib.get_ranging_data.restype = ctypes.c_int
+
+lidar_lib.getSpads.argtypes = [ctypes.c_void_p, ctypes.c_int]
+lidar_lib.getSpads.restype = ctypes.c_int
+
 class LidarSensor:
     def __init__(self):
        
@@ -60,3 +78,19 @@ class LidarSensor:
 
     def print_info_matrix(self):
         lidar_lib.printInfoSingle(self._c_ptr)
+        
+    def print_info_multiple(self, count: int):
+        lidar_lib.printInfoMultiple(self._c_ptr, count)
+        
+    def get_zone_strongest_reflectance(self) -> int:
+        return lidar_lib.getZoneStrongestReflectance(self._c_ptr)
+    
+    def get_zone_most_spads(self) -> int:
+        return lidar_lib.getZoneMostSpads(self._c_ptr)
+    
+    def check_material(self, spad_threshold: int) -> bool:
+        return lidar_lib.checkMaterial(self._c_ptr, spad_threshold)
+    
+    def get_spads_of_zone(self, zone: int) -> int:
+        return lidar_lib.getSpads(self._c_ptr, zone)
+    

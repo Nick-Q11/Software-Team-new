@@ -178,6 +178,36 @@ int getZoneStrongestReflectance(VL53L8CX_calibrate *calib)
     return zone;
 }
 
+int getZoneMostSpads(VL53L8CX_calibrate *calib)
+{
+    int status = 0;
+    if(calib->calibrated != 1){
+        calibrate(calib);
+    }
+    status = get_ranging_data(&calib->conf, &calib->results);
+    failure(status, "Failed to get ranging data");
+    int spads = 0;
+    int zone = 0;
+    for(int i = 0; i < 64; i++){
+        if(calib->results.signal_per_spad[i] > spads){
+            spads = calib->results.signal_per_spad[i];
+            zone = i;
+        }
+    }
+    return zone;
+}
+
+int getSpads(VL53L8CX_calibrate *calib, int zone)
+{
+    int status = 0;
+    if(calib->calibrated != 1){
+        calibrate(calib);
+    }
+    status = get_ranging_data(&calib->conf, &calib->results);
+    failure(status, "Failed to get ranging data");
+    return calib->results.signal_per_spad[zone];
+}
+
 int getDistance(VL53L8CX_calibrate *calib, int zone)
 {
     int status = 0;
@@ -203,6 +233,17 @@ int getReflectance(VL53L8CX_calibrate *calib, int zone)
 size_t getSizeOfCalibrateStruct(void)
 {
     return sizeof(VL53L8CX_calibrate);
+}
+
+bool checkMaterial(VL53L8CX_calibrate *calib, int spad_threshold){
+    int zone = getZoneMostSpads(calib);
+    int spads = getDistance(calib, zone);
+    if(spads > spad_threshold){
+        return true;
+    }
+    else{
+        return false;
+    }
 }
 
 int main(void){
