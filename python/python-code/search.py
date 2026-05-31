@@ -110,7 +110,7 @@ async def fly_to_position(
 
 async def scan(scanner):
     """
-    Executes a complete servo scan.
+    Executes a complete servo scan per 180 degrees.
 
     Returns:
         True：marker found
