@@ -108,7 +108,11 @@ async def fly_to_position(
             return True
 
 
-async def scan(scanner):
+async def scan(
+    uav,
+    scanner,
+    waypoint,
+):
     """
     Executes a complete servo scan per 180 degrees.
 
@@ -116,6 +120,25 @@ async def scan(scanner):
         True：marker found
         False：marker not found
     """
+    heading = uav.get_attitude()[2]
+ 
+    # First scan
+    await uav.send_goal_position(
+        waypoint[0],
+        waypoint[1],
+        FLIGHT_ALTITUDE,
+        heading,
+    )
+
+    await scanner.scan()
+
+    # Second scan (180° rotated)
+    await uav.send_goal_position(
+        waypoint[0],
+        waypoint[1],
+        FLIGHT_ALTITUDE,
+        (heading + 180) % 360,
+    )
 
     await scanner.scan()
 
