@@ -208,6 +208,6 @@ size_t getSizeOfCalibrateStruct(void)
 int main(void){
     VL53L8CX_calibrate calib;
     calibrate(&calib);
-    printInfoMultiple(&calib, 5);
+    printInfoMultiple(&calib, 10);
     return 0;
 }
