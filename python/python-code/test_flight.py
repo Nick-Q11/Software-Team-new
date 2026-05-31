@@ -59,4 +59,66 @@ async def fly_to_relative_position(uav, rel_position_x, rel_position_y=0.0, rela
         if distance <= horizontal_uncertainity:
             print("Reached position.")
             break
+
+async def main():
+    # Connect to UAV (simulator mode)
+    uav = await UAV.connect(use_sim=True)
+    flight_altitude = 2.0
+    horizontal_uncertainity = 0.2
+    veritcal_uncertainity = 0.2
+
+    # Wait for connection
+    await asyncio.sleep(2)
+
+    # Print initial position and attitude
+    print("Initial position:", uav.get_position())
+    
+    # Takeoff to 2.0 m altitude
+    await takeoff(uav, takeoff_altitude=flight_altitude, vertical_uncertainity=veritcal_uncertainity)
+    
+    # Hover for 2 seconds
+    await asyncio.sleep(2)
+
+    # Set center distance
+    center_dist = 2.0
+    # Fly to positions around center distance
+    print(f"\nFlying to x=-{center_dist}, y=-{center_dist}")
+    await fly_to_relative_position(uav=uav, rel_position_x=-center_dist, rel_position_y=-center_dist, relative_altitude=flight_altitude, 
+                                   horizontal_uncertainity=horizontal_uncertainity)
+    await asyncio.sleep(5)
+
+    print(f"\nFlying to x={2*center_dist}, y=0.0")
+    await fly_to_relative_position(uav=uav, rel_position_x=2*center_dist, rel_position_y=0.0, relative_altitude=flight_altitude, 
+                                   horizontal_uncertainity=horizontal_uncertainity)
+    await asyncio.sleep(5)
+
+    print(f"\nFlying to x=0.0, y={2*center_dist}")
+    await fly_to_relative_position(uav=uav, rel_position_x=0.0, rel_position_y=2*center_dist, relative_altitude=flight_altitude, 
+                                   horizontal_uncertainity=horizontal_uncertainity)
+    await asyncio.sleep(5)
+
+    print(f"\nFlying to x=-{2*center_dist}, y=0.0")
+    await fly_to_relative_position(uav=uav, rel_position_x=-2*center_dist, rel_position_y=0.0, relative_altitude=flight_altitude, 
+                                   horizontal_uncertainity=horizontal_uncertainity)
+    await asyncio.sleep(5)
+
+    print(f"\nFlying to x=0.0, y=-{2*center_dist}")
+    await fly_to_relative_position(uav=uav, rel_position_x=0.0, rel_position_y=-2*center_dist, relative_altitude=flight_altitude, 
+                                   horizontal_uncertainity=horizontal_uncertainity)
+    await asyncio.sleep(5)
+
+    print(f"\nFlying to x={center_dist}, y={center_dist}")
+    await fly_to_relative_position(uav=uav, rel_position_x=center_dist, rel_position_y=center_dist, relative_altitude=flight_altitude, 
+                                   horizontal_uncertainity=horizontal_uncertainity)
+    
+    # Hover for 2 seconds
+    await asyncio.sleep(2)
+
+    # Land the UAV
+    await uav.land()
+
+
+if __name__ == "__main__":
+    # Run the async main function
+    asyncio.run(main())
     
