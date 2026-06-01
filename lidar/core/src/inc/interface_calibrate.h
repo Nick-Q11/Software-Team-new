@@ -58,8 +58,6 @@ int getZoneMostSpads(VL53L8CX_calibrate *calib);
 
 int getSpads(VL53L8CX_calibrate *calib, int zone);
 
-size_t getSizeOfCalibrateStruct(void);
-
 int get_ranging_data(VL53L8CX_Configuration *p_dev, VL53L8CX_ResultsData *p_results);
 
 void powerON(void);

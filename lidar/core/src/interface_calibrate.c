@@ -186,7 +186,7 @@ int getZoneMostSpads(VL53L8CX_calibrate *calib)
     }
     status = get_ranging_data(&calib->conf, &calib->results);
     failure(status, "Failed to get ranging data");
-    int spads = 0;
+    uint32_t spads = 0;
     int zone = 0;
     for(int i = 0; i < 64; i++){
         if(calib->results.signal_per_spad[i] > spads){
