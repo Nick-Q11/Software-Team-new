@@ -10,6 +10,7 @@
 #define FREQUENCE 10
 #define INTEGRATION_TIME 20
 #define MAX_UINT16 65535
+#define SAMPLES 10
 
 
 void sleep_ms(int ms)
@@ -54,8 +55,8 @@ int calibrate(VL53L8CX_calibrate *calib)
     calib->ranging_frequency = FREQUENCE;
     calib->integration_time = INTEGRATION_TIME;
     calib->data_is_ready = (uint8_t*)malloc(sizeof(uint8_t));
+
     status = vl53l8cx_init(&calib->conf);
-    
     failure(status, "Failed to initialize VL53L8CX sensor");
 
     status = vl53l8cx_set_resolution(&calib->conf, calib->resolution);
@@ -89,16 +90,23 @@ int calibrate(VL53L8CX_calibrate *calib)
     return 0;
 }
 
-int get_ranging_data(VL53L8CX_Configuration *p_dev, VL53L8CX_ResultsData *p_results)
+uint8_t calibrate_glass( VL53L8CX_calibrate *calib, uint16_t distance_mm, uint16_t reflectance_percent)
+{
+    uint8_t nb_samples = SAMPLES;
+    vl53l8cx_calibrate_xtalk(&calib->conf, nb_samples, reflectance_percent, distance_mm);
+    return 0;
+}
+
+int get_ranging_data(VL53L8CX_calibrate *calib)
 {
     int status = 0;
     int min = 0;
     int value = 0;
     do{
         min = INT32_MAX;
-        status = vl53l8cx_get_ranging_data(p_dev, p_results);
-        for(int i = 0; i < tyles; i++){
-            value = p_results->distance_mm[i];
+        status = vl53l8cx_get_ranging_data(&calib->conf, &calib->results);
+        for(int i = 0; i < 64; i++){
+            value = calib->results.distance_mm[i];
             min = MIN(min, value);
         }
         sleep_ms(10);

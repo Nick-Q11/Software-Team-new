@@ -58,12 +58,14 @@ int getZoneMostSpads(VL53L8CX_calibrate *calib);
 
 int getSpads(VL53L8CX_calibrate *calib, int zone);
 
-int get_ranging_data(VL53L8CX_Configuration *p_dev, VL53L8CX_ResultsData *p_results);
+int get_ranging_data(VL53L8CX_calibrate *calib);
 
 void powerON(void);
 
 int failure(int status, const char* message);
 
 void sleep_ms(int ms);
+
+uint8_t calibrate_glass( VL53L8CX_calibrate *calib, uint16_t distance_mm, uint16_t reflectance_percent);
 
 size_t getSizeOfCalibrateStruct(void);
