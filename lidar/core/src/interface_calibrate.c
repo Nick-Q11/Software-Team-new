@@ -122,7 +122,7 @@ int printInfoSingle(VL53L8CX_calibrate *calib)
         calibrate(calib);
     }
     int y = 0;
-    status = get_ranging_data(&calib->conf, &calib->results);
+    status = get_ranging_data(calib);
     failure(status, "Failed to get ranging data");
     for(int i = 0; i < 8; i++){
         for(int j = 0; j < 8; j++){
@@ -154,7 +154,7 @@ int getZoneClosestDistance(VL53L8CX_calibrate *calib)
     if(calib->calibrated != 1){
         calibrate(calib);
     }
-    status = get_ranging_data(&calib->conf, &calib->results);
+    status = get_ranging_data(calib);
     failure(status, "Failed to get ranging data");
     int closest_distance = MAX_UINT16; // Max value for uint16_t
     int zone = 0;
@@ -173,7 +173,7 @@ int getZoneStrongestReflectance(VL53L8CX_calibrate *calib)
     if(calib->calibrated != 1){
         calibrate(calib);
     }
-    status = get_ranging_data(&calib->conf, &calib->results);
+    status = get_ranging_data(calib);
     failure(status, "Failed to get ranging data");
     int strongest_reflectance = 0;
     int zone = 0;
@@ -192,7 +192,7 @@ int getZoneMostSpads(VL53L8CX_calibrate *calib)
     if(calib->calibrated != 1){
         calibrate(calib);
     }
-    status = get_ranging_data(&calib->conf, &calib->results);
+    status = get_ranging_data(calib);
     failure(status, "Failed to get ranging data");
     uint32_t spads = 0;
     int zone = 0;
@@ -211,7 +211,7 @@ int getSpads(VL53L8CX_calibrate *calib, int zone)
     if(calib->calibrated != 1){
         calibrate(calib);
     }
-    status = get_ranging_data(&calib->conf, &calib->results);
+    status = get_ranging_data(calib);
     failure(status, "Failed to get ranging data");
     return calib->results.signal_per_spad[zone];
 }
@@ -222,7 +222,7 @@ int getDistance(VL53L8CX_calibrate *calib, int zone)
     if(calib->calibrated != 1){
         calibrate(calib);
     }
-    status = get_ranging_data(&calib->conf, &calib->results);
+    status = get_ranging_data(calib);
     failure(status, "Failed to get ranging data");
     return calib->results.distance_mm[zone];
 }
@@ -233,7 +233,7 @@ int getReflectance(VL53L8CX_calibrate *calib, int zone)
     if(calib->calibrated != 1){
         calibrate(calib);
     }
-    status = get_ranging_data(&calib->conf, &calib->results);
+    status = get_ranging_data(calib);
     failure(status, "Failed to get ranging data");
     return calib->results.reflectance[zone];
 }
