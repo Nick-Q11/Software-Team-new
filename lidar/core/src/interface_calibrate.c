@@ -116,7 +116,7 @@ int get_ranging_data(VL53L8CX_calibrate *calib)
         calibrate(calib);
     }
     do{
-        status = vl53l8cx_check_data_ready(&calib->conf, &calib->data_is_ready);
+        status = vl53l8cx_check_data_ready(&calib->conf, calib->data_is_ready);
         if(status != 0){
             j --;
             if(j<1){
@@ -287,10 +287,12 @@ bool checkMaterial(VL53L8CX_calibrate *calib, int spad_threshold){
 }
 
 int set_sharpener(VL53L8CX_calibrate *calib, uint8_t sharpener_percent){
+    int status = 0;
     if(calib->calibrated != 1){
         calibrate(calib);
     }
-    return vl53l8cx_set_sharpener(calib->conf, sharpener_percent);
+    status = vl53l8cx_set_sharpener_percent(&calib->conf, sharpener_percent);
+    return status;
 }
 
 int main(void){

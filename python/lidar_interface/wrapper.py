@@ -52,6 +52,9 @@ lidar_lib.getSpads.restype = ctypes.c_int
 lidar_lib.calibrate_glass.argtypes = [ctypes.c_void_p]
 lidar_lib.calibrate_glass.restype = ctypes.c_int
 
+lidar_lib.set_sharpener.argtypes = [ctypes.c_void_p, ctypes.c_int]
+lidar_lib.set_sharpener.restype = ctypes.c_int
+
 class LidarSensor:
     def __init__(self):
        
@@ -100,3 +103,5 @@ class LidarSensor:
     def calibrate_glass(self, distance_mm: int, reflectance_percent: int) -> int:
         return lidar_lib.calibrate_glass(self._c_ptr, distance_mm, reflectance_percent)
     
+    def set_sharpener(self, sharpener_percent: int) -> int:
+        return lidar_lib.set_sharpener(self._c_ptr, sharpener_percent)
