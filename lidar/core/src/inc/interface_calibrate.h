@@ -13,8 +13,9 @@
 #include <stdlib.h>
 #include <wiringPi.h>
 
-#define LPN 13
-#define PWREN 15
+#define LPn 31
+#define PWR_EN 29
+#define SPI_I2C_N 35
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define ABS(a) ((a) < 0 ? -(a) : (a))

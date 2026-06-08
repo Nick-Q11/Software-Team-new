@@ -32,14 +32,18 @@ void powerON(void)
 {
     int status = wiringPiSetupPhys(); // Initialize wiringPi library
     failure(status, "Failed to initialize wiringPi");
-    pinMode(LPN, OUTPUT);
-    pinMode(PWREN, OUTPUT);
-    digitalWrite(LPN, LOW);
-    digitalWrite(PWREN, LOW);
-    sleep_ms(100);
-    digitalWrite(PWREN, HIGH);
+    pinMode(SPI_I2C_N, OUTPUT);
+    pinMode(LPn, OUTPUT);
+    pinMode(PWR_EN, OUTPUT);
+    digitalWrite(SPI_I2C_N, LOW);
+    digitalWrite(LPn, LOW);
+    digitalWrite(PWR_EN, LOW);
     sleep_ms(50);
-    digitalWrite(LPN, HIGH);
+    digitalWrite(SPI_I2C_N, HIGH);
+    sleep_ms(100);
+    digitalWrite(PWR_EN, HIGH);
+    sleep_ms(50);
+    digitalWrite(LPn, HIGH);
     sleep_ms(250);
 }
 
