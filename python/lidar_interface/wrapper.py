@@ -105,3 +105,4 @@ class LidarSensor:
     
     def set_sharpener(self, sharpener_percent: int) -> int:
         return lidar_lib.set_sharpener(self._c_ptr, sharpener_percent)
+    

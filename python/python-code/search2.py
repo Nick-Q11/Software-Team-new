@@ -2,7 +2,14 @@ import asyncio
 import numpy as np
 from mechsys_uav import UAV
 import haversine
+import sys
+from pathlib import Path
 
+
+BASE_DIR = Path(__file__).resolve().parents[1]
+sys.path.append(str(BASE_DIR))
+
+from lidar_interface.wrapper import LidarSensor
 
 # in meters
 FLIGHT_ALTITUDE = 5.0
@@ -16,6 +23,9 @@ NORTH_EAST_CORNER = (49.57069804930975, 11.030361860205034)
 NORTH_WEST_CORNER = (49.57058365455419, 11.030150838986174)
 SOUTH_EAST_CORNER = (49.57057898537339, 11.030527456713145)
 SOUTH_WEST_CORNER = (49.57046342304837, 11.030320035396016)
+
+FIELD_OF_VIEW = np.radians(22.5)
+
 
 
 def get_abs_distance(position1, position2):
@@ -32,6 +42,53 @@ def interpolate(p1, p2, t):
         p1[1] + (p2[1] - p1[1]) * t,
     )
 
+def get_pitch_y_matrix(pitch):
+    pitch = np.radians(pitch)
+    c = np.cos(pitch)
+    s = np.sin(pitch)
+    return np.array([
+        [1, 0, 0],
+        [0, c, -s],
+        [0, s, c],
+    ])
+    
+def get_yaw_z_matrix(yaw):
+    yaw = np.radians(yaw)
+    c = np.cos(yaw)
+    s = np.sin(yaw)
+    return np.array([
+        [c, -s, 0],
+        [s, c, 0],
+        [0, 0, 1],
+    ])
+
+def get_position_lidar_from_zone(height_drone, zone, pitch, yaw): 
+    distance = LidarSensor.get_distance_of_zone(zone)
+    
+    col = zone % 8
+    row = zone // 8
+
+    x_norm = (col - 3.5) / 3.5
+    y_norm = (row - 3.5) / 3.5
+
+    angle_x = x_norm * FIELD_OF_VIEW
+    angle_y = y_norm * FIELD_OF_VIEW
+
+    # 4. Richtungsvektor im Sensorraum
+    dir_vec = np.array([np.sin(angle_x), np.sin(angle_y), np.cos(angle_x) * np.cos(angle_y)])
+
+
+    pos = dir_vec * distance
+    pitch_matrix = get_pitch_y_matrix(pitch)
+    yaw_matrix = get_yaw_z_matrix(yaw)
+    rot_matrix = np.matmul(yaw_matrix, pitch_matrix)
+    
+    pos = np.matmul(rot_matrix, pos)
+
+    return pos
+        
+
+    
 
 def generate_lawnmower_waypoints():
     # Generate 16 internal waypoints. All of them lie inside the flight-zone boundary.
