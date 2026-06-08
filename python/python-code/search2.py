@@ -57,33 +57,62 @@ def get_yaw_z_matrix(yaw):
     c = np.cos(yaw)
     s = np.sin(yaw)
     return np.array([
-        [c, -s, 0],
-        [s, c, 0],
-        [0, 0, 1],
+        [c, 0, s],
+        [0, 1, 0],
+        [-s, 0, c],
     ])
 
+def get_distortion_factor_l(pitch, yaw):
+    pitch_rad = np.radians(pitch)
+    yaw_rad = np.radians(yaw)
+    
+    numerator_l = np.tan(pitch_rad + FIELD_OF_VIEW) - np.tan(pitch_rad - FIELD_OF_VIEW)
+    denominator_l = 2 * np.tan(FIELD_OF_VIEW) * np.cos(yaw_rad)
+    factor_l = numerator_l / denominator_l
+    
+    return factor_l
+
+def get_distortion_factor_w(pitch, yaw):
+    pitch_rad = np.radians(pitch)
+    yaw_rad = np.radians(yaw)
+    
+    numerator_w = np.cos(yaw_rad)
+    denominator_w = np.cos(pitch_rad + FIELD_OF_VIEW)
+    factor_w = numerator_w / denominator_w
+    
+    return factor_w
+    
+    
+    
+
 def get_position_lidar_from_zone(height_drone, zone, pitch, yaw): 
+    if not (0 <= zone < 64):
+        raise ValueError("Zone must be between 0 and 63 inclusive.")
+    
     distance = LidarSensor.get_distance_of_zone(zone)
     
     col = zone % 8
     row = zone // 8
 
-    x_norm = (col - 3.5) / 3.5
-    y_norm = (row - 3.5) / 3.5
-
-    angle_x = x_norm * FIELD_OF_VIEW
-    angle_y = y_norm * FIELD_OF_VIEW
-
-    # 4. Richtungsvektor im Sensorraum
-    dir_vec = np.array([np.sin(angle_x), np.sin(angle_y), np.cos(angle_x) * np.cos(angle_y)])
-
-
-    pos = dir_vec * distance
-    pitch_matrix = get_pitch_y_matrix(pitch)
-    yaw_matrix = get_yaw_z_matrix(yaw)
-    rot_matrix = np.matmul(yaw_matrix, pitch_matrix)
+    d = np.sqrt(max(0, distance**2 - height_drone**2))
     
-    pos = np.matmul(rot_matrix, pos)
+    angle_pixel = np.linspace(-FIELD_OF_VIEW, FIELD_OF_VIEW, 8)
+
+    angle_x = angle_pixel[col]
+    angle_y = angle_pixel[row]
+    
+    sin_x = np.sin(angle_x)
+    sin_y = np.sin(angle_y)
+
+    angle_total = np.sqrt(sin_x**2 + sin_y**2)
+    
+    if angle_total > 0:
+        x = d * sin_x / angle_total
+        y = d * sin_y / angle_total
+    else:
+        x = 0.0
+        y = 0.0
+    pos = x, y
 
     return pos
         
