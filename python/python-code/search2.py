@@ -47,9 +47,9 @@ def get_pitch_y_matrix(pitch):
     c = np.cos(pitch)
     s = np.sin(pitch)
     return np.array([
-        [1, 0, 0],
-        [0, c, -s],
-        [0, s, c],
+        [c, 0, s],
+        [0, 1, 0],
+        [-s, 0, c]   
     ])
     
 def get_yaw_z_matrix(yaw):
@@ -57,9 +57,9 @@ def get_yaw_z_matrix(yaw):
     c = np.cos(yaw)
     s = np.sin(yaw)
     return np.array([
-        [c, 0, s],
-        [0, 1, 0],
-        [-s, 0, c],
+        [c, -s, 0],
+        [s, c, 0],
+        [0, 0, 1],
     ])
 
 def get_distortion_factor_l(pitch, yaw):
@@ -86,32 +86,46 @@ def get_distortion_factor_w(pitch, yaw):
     
 
 def get_position_lidar_from_zone(height_drone, zone, pitch, yaw): 
+    
     if not (0 <= zone < 64):
         raise ValueError("Zone must be between 0 and 63 inclusive.")
     
     distance = LidarSensor.get_distance_of_zone(zone)
+    
+    pitch = np.radians(pitch)
+    yaw = np.radians(yaw)
+    
+    
     
     col = zone % 8
     row = zone // 8
 
     d = np.sqrt(max(0, distance**2 - height_drone**2))
     
-    angle_pixel = np.linspace(-FIELD_OF_VIEW, FIELD_OF_VIEW, 8)
+    step = 2 * FIELD_OF_VIEW / 8
+    angle_pixel = np.linspace(
+    -FIELD_OF_VIEW + step/2,
+     FIELD_OF_VIEW - step/2,
+     8
+    )
 
     angle_x = angle_pixel[col]
     angle_y = angle_pixel[row]
     
-    sin_x = np.sin(angle_x)
-    sin_y = np.sin(angle_y)
-
-    angle_total = np.sqrt(sin_x**2 + sin_y**2)
+    beam_vector = np.array([
+        np.tan(angle_x),
+        np.tan(angle_y),
+        -1.0
+    ])
     
-    if angle_total > 0:
-        x = d * sin_x / angle_total
-        y = d * sin_y / angle_total
-    else:
-        x = 0.0
-        y = 0.0
+    beam_vector /= np.linalg.norm(beam_vector)
+
+    sensor_system = (get_yaw_z_matrix(yaw) @ get_pitch_y_matrix(pitch)) @ beam_vector
+
+    h = height_drone / (-sensor_system[2])
+    x = h * sensor_system[0]
+    y = h * sensor_system[1]
+    
     pos = x, y
 
     return pos
