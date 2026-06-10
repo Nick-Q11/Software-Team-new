@@ -1,4 +1,3 @@
-````markdown
 # Software-Team
 
 ## Übersicht
@@ -19,7 +18,7 @@ Die Architektur besteht aus zwei Hauptteilen:
 
 # Projektstruktur
 
-```text
+
 .
 ├── lidar/
 │   └── core/
@@ -50,7 +49,7 @@ Die Architektur besteht aus zwei Hauptteilen:
 ├── test/
 ├── pyproject.toml
 └── README.md
-````
+
 
 ---
 
