@@ -49,6 +49,7 @@ Die Architektur besteht aus zwei Hauptteilen:
 ├── pyproject.toml
 └── README.md
 
+```
 
 ---
 
