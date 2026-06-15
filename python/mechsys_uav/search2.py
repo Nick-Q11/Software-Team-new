@@ -3,8 +3,8 @@ import numpy as np
 from mechsys_uav import UAV
 import haversine
 import sys
-from servo_controller import Servo
-from servo_controller import Scanner
+from servo import Servo
+from servo import Scanner
 from pathlib import Path
 
 

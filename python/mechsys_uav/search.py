@@ -1,15 +1,12 @@
 import asyncio
-import numpy as np
-from mechsys_uav import UAV
 import haversine
 
-
 # in meters
-FLIGHT_ALTITUDE = 5.0
+FLIGHT_ALTITUDE = 2.5
 POSITION_TOLERANCE = 0.5
+WAYPOINT_TIMEOUT = 30.0
 
 GRID_SIZE = 4
-
 
 # Flight Zone Corners
 NORTH_EAST_CORNER = (49.57069804930975, 11.030361860205034)
@@ -34,7 +31,10 @@ def interpolate(p1, p2, t):
 
 
 def generate_lawnmower_waypoints():
-    # Generate 16 internal waypoints. All of them lie inside the flight-zone boundary.
+    """
+    Generate 16 internal waypoints
+    in serpentine pattern.
+    """
 
     waypoints = []
 
@@ -68,7 +68,7 @@ def generate_lawnmower_waypoints():
 
             row_points.append(point)
 
-        # Lawnmower pattern
+        # serpentine pattern
         if row % 2 == 1:
             row_points.reverse()
 
@@ -82,6 +82,9 @@ async def fly_to_position(
     goal_position,
     relative_altitude=FLIGHT_ALTITUDE,
 ):
+    """
+    Fly to GPS position and wait until reached.
+    """
 
     accepted = await uav.send_goal_position(
         goal_position[0],
@@ -90,7 +93,10 @@ async def fly_to_position(
     )
 
     if not accepted:
+        print("Waypoint rejected.")
         return False
+
+    start_time = asyncio.get_event_loop().time()
 
     while True:
 
@@ -105,7 +111,25 @@ async def fly_to_position(
 
         if distance <= POSITION_TOLERANCE:
 
+            print(
+                f"Reached waypoint "
+                f"(distance={distance:.2f} m)"
+            )
+
             return True
+
+        if (
+            asyncio.get_event_loop().time()
+            - start_time
+            > WAYPOINT_TIMEOUT
+        ):
+
+            print(
+                f"Waypoint timeout "
+                f"(distance={distance:.2f} m)"
+            )
+
+            return False
 
 
 async def scan(
@@ -114,14 +138,28 @@ async def scan(
     waypoint,
 ):
     """
-    Executes a complete servo scan per 180 degrees.
+    Perform two scans:
+    - current heading
+    - heading + 180°
 
     Returns:
-        True：marker found
-        False：marker not found
+        True  -> marker found
+        False -> marker not found
     """
+
     heading = uav.get_attitude()[2]
- 
+
+    if heading is None:
+
+        print("No heading available.")
+
+        return False
+
+    print(
+        f"Scanning at heading "
+        f"{heading:.1f}°"
+    )
+
     # First scan
     await uav.send_goal_position(
         waypoint[0],
@@ -130,29 +168,63 @@ async def scan(
         heading,
     )
 
-    await scanner.scan()
+    await asyncio.sleep(2)
 
-    # Second scan (180° rotated)
+    measurements_1 = await scanner.scan()
+
+    await asyncio.sleep(1)
+
+    # Second scan
+    second_heading = (
+        heading + 180
+    ) % 360
+
+    print(
+        f"Scanning at heading "
+        f"{second_heading:.1f}°"
+    )
+
     await uav.send_goal_position(
         waypoint[0],
         waypoint[1],
         FLIGHT_ALTITUDE,
-        (heading + 180) % 360,
+        second_heading,
     )
 
-    await scanner.scan()
+    await asyncio.sleep(2)
 
+    measurements_2 = await scanner.scan()
+
+    await asyncio.sleep(1)
+
+    measurements = (
+        measurements_1
+        + measurements_2
+    )
+
+    #
     # TODO:
     # Evaluate LiDAR data
-    pass
+    #
+    # Example:
+    #
+    # marker_found = evaluate_measurements(
+    #     measurements
+    # )
+    #
 
-    return False
+    marker_found = False
+
+    return marker_found
 
 
 async def return_home(
     uav,
     home_position,
 ):
+    """
+    Return to home position.
+    """
 
     print("\nReturning home...")
 
@@ -167,10 +239,26 @@ async def search(
     home_position,
     scanner,
 ):
+    """
+    Main search routine.
+    """
 
     waypoints = generate_lawnmower_waypoints()
 
-    for waypoint in waypoints:
+    print(
+        f"Generated "
+        f"{len(waypoints)} waypoints."
+    )
+
+    for idx, waypoint in enumerate(
+        waypoints,
+        start=1,
+    ):
+
+        print(
+            f"\nWaypoint "
+            f"{idx}/{len(waypoints)}"
+        )
 
         reached = await fly_to_position(
             uav=uav,
@@ -178,11 +266,24 @@ async def search(
         )
 
         if not reached:
+
+            print(
+                "Skipping waypoint."
+            )
+
             continue
 
-        marker_found = await scan(scanner)
+        marker_found = await scan(
+            uav,
+            scanner,
+            waypoint,
+        )
 
         if marker_found:
+
+            print(
+                "\nMarker found!"
+            )
 
             await return_home(
                 uav,
@@ -191,7 +292,9 @@ async def search(
 
             return True
 
-    # Search completed without marker detection
+    print(
+        "\nSearch completed."
+    )
 
     await return_home(
         uav,
@@ -199,3 +302,4 @@ async def search(
     )
 
     return False
+    # Search completes without marker detection

@@ -246,7 +246,7 @@ lidar.print_info_multiple(5)
 # Beispiel: Lidar Demo
 
 ```bash
-python python/python-code/lidar_demo.py
+python python/mechsys_uav/lidar_demo.py
 ```
 
 ---
@@ -256,13 +256,13 @@ python python/python-code/lidar_demo.py
 ## Hauptprogramm
 
 ```bash
-python python/python-code/main.py
+python python/mechsys_uav/main.py
 ```
 
 ## UAV Demo
 
 ```bash
-python python/python-code/mechsys_demo.py
+python python/mechsys_uav/mechsys_demo.py
 ```
 
 ---
@@ -281,8 +281,8 @@ python/python-code/flight_zones/
 # Tests
 
 ```bash
-python python/python-code/test_flight.py
-python python/python-code/test_servo.py
+python python/mechsys_uav/test_flight.py
+python python/mechsys_uav/test_servo.py
 ```
 
 ---

@@ -198,7 +198,14 @@ class UAV():
             else:
                 flight_zone_name = "techfak_wiese.plan"
 
-        flight_zone_file = files("mechsys_uav.flight_zones").joinpath(flight_zone_name)
+        from pathlib import Path
+
+        flight_zone_file = (
+                Path(__file__).parent
+                / "flight_zones"
+                / flight_zone_name
+        )
+
         try:
             with open(flight_zone_file, 'r') as f:
                 data = json.load(f)

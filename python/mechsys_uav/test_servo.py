@@ -1,5 +1,5 @@
 import pigpio
-from servo_controller import Scanner
+from servo import Scanner
 
 
 def main():
