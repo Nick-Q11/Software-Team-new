@@ -10,9 +10,8 @@ import haversine
 import numpy as np
 
 async def main():
-    uav = await UAV.connect(serial_device='/dev/ttyS0', serial_baud=57600, use_sim=False, udp_port=14540, flight_zone_name='test_flight_zone')
-    await uav.wait_for_connection(serial_device='/dev/ttyS0', serial_baud=57600, use_sim=False, udp_port=14540)
-
+    uav = await UAV.connect(serial_device='/dev/ttyACM0', serial_baud=57600, use_sim=False)
+    print("UAV connected.")
     while True:
         lat, long, alt = uav.get_position()
         print(f"lat: {lat}, long: {long}, alt: {alt}")
