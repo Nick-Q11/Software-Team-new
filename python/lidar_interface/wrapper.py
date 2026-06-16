@@ -81,6 +81,11 @@ class LidarSensor:
         zone = lidar_lib.getZoneClosestDistance(self._c_ptr)
         distance = self.get_distance_of_zone(zone)
         return zone, distance
+    
+    def get_most_spads(self) -> tuple[int, int]:
+        zone = lidar_lib.getZoneMostSpads(self._c_ptr)
+        spads = self.get_spads_of_zone(zone)
+        return zone, spads
 
     def print_info_matrix(self):
         lidar_lib.printInfoSingle(self._c_ptr)

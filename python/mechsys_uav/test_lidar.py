@@ -13,23 +13,30 @@ from lidar_interface.wrapper import LidarSensor
 
 
 async def vibration_test(lidar_sensor: LidarSensor):
-    
-    
     gimbal = Scanner()
     gimbal.center()
     
-    zone = 64;
-    closest_distance = 4000
+    zone_d = 64;
+    closest_distance = 2000 # 2m als default-Wert
+    zone_s = 64;
+    highest_spads = 128 # 128 als default Wert
     
     print("Vibrationstest gestartet. Überwache LiDAR-Matrix...")
     
     try:
         while True:
+            print("Aktuelle LiDAR-Matrix:")
+            lidar_sensor.print_info_matrix()
             closest_zone, distance = lidar_sensor.get_closest_zone()
-            print(f"Zone {zone} hat den Unterschied {closest_distance-distance} mm")
-            zone = closest_zone
+            highest_spads_zone, spad = lidar_sensor.get_most_spads()
+            print("-------------------Distanzamplitude:-------------------------")
+            print(f"Zone_d {zone_d} hat den Unterschied {closest_distance-distance} mm")
+            zone_d = closest_zone
             closest_distance = distance
-            
+            print("----------------Helligkeitsunterschied:----------------------")
+            print(f"Zone_s {zone_s} hat den Unterschied {highest_spads-spad} SPADs")
+            zone_s = highest_spads_zone
+            highest_spads = spad
             await asyncio.sleep(0.2)
             print()
     except KeyboardInterrupt:
