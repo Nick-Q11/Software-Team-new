@@ -12,14 +12,11 @@ sys.path.append(str(BASE_DIR))
 from lidar_interface.wrapper import LidarSensor
 
 
-async def vibration_test(lidar_sensor: LidarSensor):
-    gimbal = Scanner()
-    gimbal.center()
-    
+async def vibration_test(lidar_sensor: LidarSensor, gimbal: Scanner):   
     zone_d = 64;
     closest_distance = 2000 # 2m als default-Wert
     zone_s = 64;
-    highest_spads = 128 # 128 als default Wert
+    highest_spads = 0 # 0 als default Wert
     
     print("Vibrationstest gestartet. Überwache LiDAR-Matrix...")
     
@@ -37,13 +34,24 @@ async def vibration_test(lidar_sensor: LidarSensor):
             print(f"Zone_s {zone_s} hat den Unterschied {highest_spads-spad} SPADs")
             zone_s = highest_spads_zone
             highest_spads = spad
-            await asyncio.sleep(0.2)
+            await asyncio.sleep(1)
             print()
     except KeyboardInterrupt:
         print("Vibrationstest beendet.")
     finally:
         gimbal.center()
         print("Gimbal in Mittelstellung zurückgesetzt.")
+        
+async def find_target(lidar_sensor: LidarSensor):
+    try:
+        while True:
+            zone, spad = lidar_sensor.get_most_spads()
+            print(f"Zone: " {zone} "Spad: " {spad})
+            await asyncio.sleep(1)
+            print()
+    except KeyboardInterrupt:
+        print("find_target beendet")
+    
     
     
 
@@ -59,13 +67,16 @@ async def main():
     
     uav.arm_and_takeoff(2)  # Take off to 2 meters altitude
     
+    gimbal = Scanner()
+    gimbal.center()
+    
     lidar_sensor = LidarSensor()
     if lidar_sensor.init_and_calibrate() != 0:
         print("Kritischer Fehler: Sensor-Kalibrierung fehlgeschlagen!")
         return
     print("Sensor erfolgreich kalibriert und bereit!")
     
-    await vibration_test(lidar_sensor)
+    await vibration_test(lidar_sensor, gimbal)
     
     uav.land()
     
