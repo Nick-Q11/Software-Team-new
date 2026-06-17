@@ -1,35 +1,29 @@
-import pigpio
+import asyncio
 from servo import Scanner
 
 
-def main():
+async def main():
 
-    pi = pigpio.pi()
-
-    if not pi.connected:
-        print("Could not connect to pigpio daemon")
-        return
-
-    YAW_PIN = 17    # for yaw servo
-    PITCH_PIN = 18  # for pitch servo
-
-    scanner = Scanner(pi, YAW_PIN, PITCH_PIN)
+    scanner = Scanner()
 
     try:
+        print("Centering...")
+        scanner.center()
+
+        await asyncio.sleep(1)
+
         print("Starting scan...")
-        scanner.scan()    # going through 6 positions
+        measurements = await scanner.scan()
+
         print("Scan finished")
+        print(measurements)
 
     except KeyboardInterrupt:
         print("Stopped by user")
 
     finally:
-        # Stop PWM signals
-        pi.set_servo_pulsewidth(YAW_PIN, 0)
-        pi.set_servo_pulsewidth(PITCH_PIN, 0)
-
-        pi.stop()  # Servos offline
+        scanner.shutdown()
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
