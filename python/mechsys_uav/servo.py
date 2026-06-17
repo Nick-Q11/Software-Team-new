@@ -13,8 +13,8 @@ def angle_to_pwm_us(angle_deg: float) -> int:
 
 
 class Servo:
-    def __init__(self, pin):
-        self.pi = pigpio.pi()
+    def __init__(self, pi, pin):
+        self.pi = pi
         self.pin = pin
 
     def set_angle(self, angle_deg: float):
@@ -26,9 +26,11 @@ class Servo:
 
 
 class Scanner:
-    def __init__(self):
-        self.yaw = Servo(YAW_PIN)
-        self.pitch = Servo(PITCH_PIN)
+    def __init__(self, pi):
+        self.pi = pi
+
+        self.yaw = Servo(pi, YAW_PIN)
+        self.pitch = Servo(pi, PITCH_PIN)
 
     async def _serpentine_sweep(
         self,
