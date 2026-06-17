@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Drone Telemetry - MAVSDK Live</title>
+    <!-- Leaflet CSS + JS (lightweight map library) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- MAVSDK GRPC Web client (official browser client) -->
+    <script src="https://cdn.jsdelivr.net/npm/@mavsdk/mavsdk@0.3.1/dist/index.umd.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: system-ui, 'Segoe UI', monospace;
+            background: #1a2a32;
+            height: 100vh;
+            overflow: hidden;
+        }
+        #map {
+            height: 100vh;
+            width: 100%;
+            z-index: 1;
+        }
+        .status-panel {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.75);
+            backdrop-filter: blur(8px);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 32px;
+            font-size: 14px;
+            font-weight: 500;
+            font-family: monospace;
+            z-index: 1000;
+            pointer-events: none;
+            border-left: 4px solid #00ffaa;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            letter-spacing: 0.5px;
+        }
+        .status-panel span {
+            color: #00ffaa;
+            font-weight: bold;
+        }
+        .conn-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.7);
+            padding: 8px 16px;
+            border-radius: 40px;
+            color: #eee;
+            font-size: 12px;
+            font-family: monospace;
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+            pointer-events: none;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .coord {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.6);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            color: #ccc;
+            font-family: monospace;
+            z-index: 1000;
+            pointer-events: none;
+        }
+        @media (max-width: 640px) {
+            .status-panel { font-size: 10px; bottom: 12px; left: 12px; padding: 8px 14px; }
+            .conn-badge { font-size: 10px; top: 12px; right: 12px; }
+            .coord { font-size: 10px; top: 12px; left: 12px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div class="status-panel" id="statusMsg">⚡ WAITING FOR DRONE<br>🔌 Connect via MAVSDK (WebSocket: <span id="wsHint">ws://localhost:8084</span>)</div>
+    <div class="conn-badge" id="connBadge">🔴 DISCONNECTED</div>
+    <div class="coord" id="coordDisplay">🌍 lat: --, lon: --</div>
+
+    <script>
+        // --------------------------------------------------------------
+        // BARE-BONES MAVSDK + LEAFLET DRONE TRACKER (NO SIMULATION)
+        // REAL DRONE connection via MAVSDK gRPC WebSocket bridge.
+        // Assumes MAVSDK gRPC server with WebSocket enabled (default port 8084).
+        // To use: run MAVSDK server: "mavsdk_server -p 50051 udp://:14550" 
+        // and enable WebSocket:  "mavsdk_server --websocket-port 8084 ..." or via config.
+        // For pure MAVSDK-python: "mavsdk_server --websocket-port 8084 udp://:14550"
+        // --------------------------------------------------------------
+        
+        // 1. INIT MAP (center: default later, zoom enough)
+        const map = L.map('map').setView([49.57034869083359, 11.03021948162635], 15); // Paris temp center, will jump to drone on first fix
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> & CartoDB',
+            subdomains: 'abcd',
+            maxZoom: 19,
+            minZoom: 3
+        }).addTo(map);
+        
+        // Drone marker and optional path (simple)
+        let droneMarker = null;
+        let pathLine = null;
+        let pathPoints = [];      // store lat,lng for trail (max 200)
+        
+        // UI elements
+        const statusDiv = document.getElementById('statusMsg');
+        const connBadge = document.getElementById('connBadge');
+        const coordDisplay = document.getElementById('coordDisplay');
+        
+        // MAVSDK client instance
+        let mavsdk = null;
+        let droneSystem = null;      // system handle after connection
+        let telemetrySubscription = null;
+        let positionSub = null;
+        let isConnected = false;
+        
+        // websocket/gRPC endpoint (change if your MAVSDK WebSocket runs elsewhere)
+        // Standard MAVSDK WebSocket uses "ws://localhost:8084" by default. Pi Adresse einfügen: 192.168.1.150:8084
+        const SERVER_ADDRESS = "ws://localhost:8084";
+        
+        // Helper: update drone position on map + trail, center map on first move (optional)
+        function updateDronePosition(lat, lng, altMeters = null) {
+            if (!lat || !lng || isNaN(lat) || isNaN(lng)) return;
+            
+            // update coordinate panel
+            coordDisplay.innerHTML = `🌍 ${lat.toFixed(6)}° , ${lng.toFixed(6)}° ${altMeters !== null ? ` ▲ ${altMeters.toFixed(1)}m` : ''}`;
+            
+            // create marker if not exists
+            if (!droneMarker) {
+                const droneIcon = L.divIcon({
+                    html: `<div style="background: #0a0; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 8px #0f0;"></div>`,
+                    iconSize: [16, 16],
+                    className: 'drone-marker'
+                });
+                droneMarker = L.marker([lat, lng], { icon: droneIcon }).addTo(map);
+                // also add custom label? optional: bindTooltip
+                droneMarker.bindTooltip("DRONE", { permanent: false, direction: 'top' }).openTooltip();
+                // center map on drone first time
+                map.setView([lat, lng], 17);
+            } else {
+                droneMarker.setLatLng([lat, lng]);
+                // optional: smooth pan only if far beyond view? just update position
+                // keep map follow? we can optionally center if user hasn't moved? but simplest: 
+                // just update marker and path.
+                // we can enable auto-center by uncomment below: (better for barebones? keep manual pan optional)
+                // uncomment for "drone follow": map.panTo([lat, lng]);
+            }
+            
+            // record path trail
+            pathPoints.push([lat, lng]);
+            if (pathPoints.length > 180) pathPoints.shift(); // keep trail manageable
+            
+            if (pathLine) {
+                map.removeLayer(pathLine);
+            }
+            if (pathPoints.length >= 2) {
+                pathLine = L.polyline(pathPoints, { color: '#00aaff', weight: 3, opacity: 0.7, lineJoin: 'round' }).addTo(map);
+            } else {
+                pathLine = null;
+            }
+        }
+        
+        // Set connection state UI
+        function setConnectionState(connected, errorMsg = "") {
+            isConnected = connected;
+            if (connected) {
+                connBadge.innerHTML = "🟢 CONNECTED (MAVSDK)";
+                connBadge.style.background = "rgba(0,40,20,0.85)";
+                statusDiv.innerHTML = "✅ DRONE ACTIVE · TELEMETRY LIVE<br>📍 waiting for position updates";
+            } else {
+                connBadge.innerHTML = "🔴 DISCONNECTED";
+                connBadge.style.background = "rgba(80,0,0,0.8)";
+                if (errorMsg) {
+                    statusDiv.innerHTML = `⚠️ CONNECTION ERROR<br>${errorMsg}<br>🔌 ensure MAVSDK server with WebSocket on ${SERVER_ADDRESS}`;
+                } else {
+                    statusDiv.innerHTML = `⚡ DISCONNECTED<br>retry or restart server at ${SERVER_ADDRESS}`;
+                }
+            }
+        }
+        
+        // subscribe to telemetry & position streams from a connected system
+        async function subscribeToDrone(system) {
+            try {
+                // cancel previous subscriptions if any
+                if (telemetrySubscription) telemetrySubscription.cancel();
+                if (positionSub) positionSub.cancel();
+                
+                const telemetry = system.telemetry;
+                // 1) subscribe to position (lat, lon, relative altitude)
+                positionSub = telemetry.position().subscribe((position) => {
+                    if (!position) return;
+                    const { latitudeDeg, longitudeDeg, relativeAltitudeM } = position;
+                    if (latitudeDeg && longitudeDeg && !isNaN(latitudeDeg)) {
+                        updateDronePosition(latitudeDeg, longitudeDeg, relativeAltitudeM);
+                        // update status with extra info maybe
+                        statusDiv.innerHTML = "✈️ DRONE FLYING · LIVE TRACKING<br>" +
+                            `📡 pos: ${latitudeDeg.toFixed(5)} , ${longitudeDeg.toFixed(5)} | alt: ${relativeAltitudeM?.toFixed(1) || '?'}m`;
+                    }
+                });
+                
+                // optional: get battery & health status (just for richer status)
+                telemetry.battery().subscribe((battery) => {
+                    if (battery && isConnected) {
+                        const volt = battery.voltageV ? battery.voltageV.toFixed(1) : '?';
+                        const perc = battery.remainingPercent ? (battery.remainingPercent * 100).toFixed(0) : '?';
+                        // update status panel with battery info, but keep main message short
+                        const oldMsg = statusDiv.innerHTML;
+                        if (oldMsg.includes("🔋")) {
+                            statusDiv.innerHTML = oldMsg.replace(/🔋.*?V/, `🔋 ${perc}% (${volt}V)`);
+                        } else {
+                            // append battery line
+                            statusDiv.innerHTML = oldMsg + `<br>🔋 ${perc}% ${volt}V`;
+                        }
+                    }
+                }).catch(e=>console.warn("battery sub err",e));
+                
+                // also in-air status just for feel
+                telemetry.inAir().subscribe((inAir) => {
+                    if (inAir !== undefined) {
+                        const flightIcon = inAir ? "🚁" : "🛬";
+                        const statusTxt = inAir ? "IN FLIGHT" : "GROUND";
+                        if (!statusDiv.innerHTML.includes(flightIcon)) {
+                            // minimal decoration
+                        }
+                    }
+                }).catch(()=>{});
+                
+                console.log("Subscriptions active for drone telemetry");
+            } catch(err) {
+                console.error("Subscription error:", err);
+                statusDiv.innerHTML = `⚠️ Telemetry subscription failed: ${err.message}`;
+            }
+        }
+        
+        // Connect to MAVSDK server & attach to first available drone system
+        async function connectToMAVSDK() {
+            try {
+                // create new MAVSDK client instance
+                mavsdk = new Mavsdk();
+                // connect using WebSocket transport (MAVSDK WebSocket address)
+                await mavsdk.connect(SERVER_ADDRESS);
+                console.log("Mavsdk connected to WebSocket server");
+                statusDiv.innerHTML = "🔄 Connecting to MAVSDK... waiting for drone system...";
+                
+                // Wait for at least one system (drone) to appear
+                // Use an async watcher: get systems and listen for new systems
+                let systems = mavsdk.systems;
+                if (systems && systems.length > 0) {
+                    droneSystem = systems[0];
+                    setConnectionState(true, "");
+                    statusDiv.innerHTML = `✅ Drone system detected (UUID: ${droneSystem.uuid})<br>⬇️ subscribing to telemetry...`;
+                    await subscribeToDrone(droneSystem);
+                    return;
+                }
+                
+                // else wait for system to appear (event based)
+                const waitForSystem = () => {
+                    return new Promise((resolve, reject) => {
+                        // check every 500ms for up to 12 seconds
+                        let elapsed = 0;
+                        const interval = setInterval(() => {
+                            const sysList = mavsdk.systems;
+                            if (sysList && sysList.length > 0) {
+                                clearInterval(interval);
+                                resolve(sysList[0]);
+                            }
+                            elapsed += 500;
+                            if (elapsed > 15000) { // 15 seconds timeout
+                                clearInterval(interval);
+                                reject(new Error("No drone system detected within 15s. Ensure actual drone connection (UDP/Serial) to mavsdk_server"));
+                            }
+                        }, 500);
+                    });
+                };
+                
+                droneSystem = await waitForSystem();
+                setConnectionState(true, "");
+                statusDiv.innerHTML = `🎯 Drone connected! system ${droneSystem.uuid}<br>📡 receiving position...`;
+                await subscribeToDrone(droneSystem);
+                
+            } catch (err) {
+                console.error("MAVSDK Connection error:", err);
+                setConnectionState(false, err.message || "Connection refused. Is MAVSDK server running with WebSocket?");
+                statusDiv.innerHTML = `❌ MAVSDK error: ${err.message}<br>🔌 run: mavsdk_server --websocket-port 8084 udp://:14550`;
+                // also show hint 
+                document.getElementById('wsHint').innerText = SERVER_ADDRESS;
+            }
+        }
+        
+        // Initial connection attempt
+        connectToMAVSDK();
+        
+        // Optional: periodic reconnection attempt if connection drops (barebones simple but effective)
+        let reconnectTimer = null;
+        function monitorConnection() {
+            if (!mavsdk || !isConnected) {
+                // if not connected and no active attempt flag, try reconnect after 5 secs
+                if (!reconnectTimer) {
+                    reconnectTimer = setTimeout(() => {
+                        reconnectTimer = null;
+                        if (!isConnected) {
+                            console.log("Attempting reconnect to MAVSDK...");
+                            connectToMAVSDK().catch(e=>console.warn("reconnect failed", e));
+                        }
+                    }, 5000);
+                }
+            } else {
+                // if connected, but sometimes telemetry might stop: health check? optional keep-alive
+                if (droneSystem && droneSystem.telemetry) {
+                    // we can also just check if position updates are arriving, but not needed
+                }
+            }
+        }
+        setInterval(monitorConnection, 4000);
+        
+        // Cleanup on page unload (graceful)
+        window.addEventListener('beforeunload', () => {
+            if (telemetrySubscription) telemetrySubscription.cancel();
+            if (positionSub) positionSub.cancel();
+            if (mavsdk) {
+                try { mavsdk.close(); } catch(e) {}
+            }
+        });
+        
+        // Additional hint on map: add a small watermark / note (optional)
+        const infoControl = L.control({ position: 'bottomright' });
+        infoControl.onAdd = function() {
+            const div = L.DomUtil.create('div', 'info-legend');
+            div.innerHTML = '<span style="background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 12px; font-size: 10px; color:#ccc;">📡 MAVSDK live | real drone</span>';
+            div.style.fontFamily = 'monospace';
+            return div;
+        };
+        infoControl.addTo(map);
+        
+        // Extra minimal log to console confirming script ready
+        console.log("Barebones MAVSDK Map ready. Expecting MAVSDK server WebSocket on", SERVER_ADDRESS);
+    </script>
+</body>
+</html>
