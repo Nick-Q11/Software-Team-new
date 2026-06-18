@@ -1,4 +1,4 @@
-#!/home/pi/Documents/Software-Team-new/.venv/bin/python3
+#!/home/nick/Dokumente/Studium/4-MechSysPrakt/Software-Team-new/.venv/bin/python3
 
 '''
 convert a MAVLink tlog file to a MATLab mfile

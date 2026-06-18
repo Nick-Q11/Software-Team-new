@@ -1,4 +1,4 @@
-#!/home/pi/Documents/Software-Team-new/.venv/bin/python3
+#!/home/nick/Dokumente/Studium/4-MechSysPrakt/Software-Team-new/.venv/bin/python3
 
 '''
 Summarize MAVLink logs. Useful for identifying which log is of interest in a large set.

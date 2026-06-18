@@ -1,4 +1,4 @@
-#!/home/pi/Documents/Software-Team-new/.venv/bin/python3
+#!/home/nick/Dokumente/Studium/4-MechSysPrakt/Software-Team-new/.venv/bin/python3
 
 '''
 extract ISBH and ISBD messages from AP_Logging files and produce FFT plots
