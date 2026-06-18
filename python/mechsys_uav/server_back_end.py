@@ -15,7 +15,7 @@ def index():
     return render_template('index.html')
 
 
-"""def update_location(long =0.0, lat=0.0):
+def update_location(long =0.0, lat=0.0):
     
     global current_location
     data = request.json
@@ -24,8 +24,8 @@ def index():
 
     print(f"Location updated: {current_location}")
     return jsonify({'status': 'success'})
-"""
-def update_location(uav: UAV):
+
+def auto_update_location(uav: UAV):
     """Update the location based on the UAV's current position"""
     global current_location
     data = request.json
@@ -41,6 +41,12 @@ def update_location(uav: UAV):
 def get_location():
     """Endpoint for webpage to get current coordinates"""
     return jsonify(current_location)
+
+def main():
+    long = 49.12
+    lat = 11.12
+    update_location(long, lat)
+    
 
 if __name__ == '__main__':
     # Run on all network interfaces, port 5000
