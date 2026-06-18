@@ -46,7 +46,7 @@ async def find_target(lidar_sensor: LidarSensor):
     try:
         while True:
             zone, spad = lidar_sensor.get_most_spads()
-            print(f"Zone: " {zone} "Spad: " {spad})
+            print(f"Zone:  {zone} Spad:  {spad}")
             await asyncio.sleep(1)
             print()
     except KeyboardInterrupt:
