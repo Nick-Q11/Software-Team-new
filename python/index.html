@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live GPS Tracker</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+        
+        .location-box {
+            background: #f7f7f7;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 5px solid #667eea;
+        }
+        
+        .label {
+            color: #666;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 10px 0 5px;
+        }
+        
+        .value {
+            color: #333;
+            font-size: 1.5em;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            word-break: break-all;
+        }
+        
+        .timestamp {
+            color: #999;
+            font-size: 0.85em;
+            margin-top: 20px;
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            background: #4CAF50;
+            color: white;
+            font-size: 0.85em;
+            margin-top: 15px;
+        }
+        
+        .map-link {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            transition: transform 0.2s;
+        }
+        
+        .map-link:hover {
+            transform: scale(1.05);
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .loading {
+            animation: pulse 1.5s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📍 Live GPS Location</h1>
+        
+        <div class="location-box">
+            <div class="label">Latitude</div>
+            <div class="value" id="latitude">--</div>
+            
+            <div class="label">Longitude</div>
+            <div class="value" id="longitude">--</div>
+            
+            <div class="timestamp" id="timestamp">Waiting for data...</div>
+            <div class="status" id="status">Connecting...</div>
+        </div>
+        
+        <a href="#" id="mapLink" class="map-link" target="_blank">🗺️ View on Google Maps</a>
+    </div>
+    
+    <script>
+        // Function to fetch latest coordinates from server
+        async function fetchLocation() {
+            try {
+                const response = await fetch('/get_position');
+                const data = await response.json();
+                
+                if (latitude !== 0 || longitude !== 0) {
+                    // Update display
+                    document.getElementById('latitude').textContent = data.latitude.toFixed(6);
+                    document.getElementById('longitude').textContent = data.longitude.toFixed(6);
+                    document.getElementById('status').textContent = '✅ Live';
+                    document.getElementById('status').style.background = '#4CAF50';
+                    
+                } else {
+                    document.getElementById('status').textContent = '⏳ Waiting for GPS data...';
+                    document.getElementById('status').style.background = '#FF9800';
+                }
+            } catch (error) {
+                console.error('Error fetching location:', error);
+                document.getElementById('status').textContent = '❌ Connection error';
+                document.getElementById('status').style.background = '#f44336';
+            }
+        }
+        
+        // Fetch location every 2 seconds
+        fetchLocation();
+        setInterval(fetchLocation, 2000);
+    </script>
+</body>
+</html>
