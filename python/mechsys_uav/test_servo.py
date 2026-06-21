@@ -1,11 +1,13 @@
 import asyncio
+import pigpio
 from servo import Scanner
 
-
 async def main():
+    pi = pigpio.pi()
+    print("1")
 
-    scanner = Scanner()
-
+    scanner = Scanner(pi)
+    print("2")
     try:
         print("Centering...")
         scanner.center()
@@ -22,6 +24,7 @@ async def main():
         print("Stopped by user")
 
     finally:
+        print("finally----------------------------------")
         scanner.shutdown()
 
 
