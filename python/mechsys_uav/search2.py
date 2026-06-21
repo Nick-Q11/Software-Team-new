@@ -134,9 +134,22 @@ def get_position_lidar_from_zone(height_drone, zone, pitch, yaw):
 
     return pos
 
-def get_absolut_lidar(height, ):
+def in_coordinates():
+    pass
 
-    pos_rel = get_position_lidar_from_zone(height, )
+async def get_absolut_lidar_pos(height, uav):
+    zones = get_lidar_zone_over_threshold()
+    pos_abs_x = []
+    pos_abs_y = []
+    i = 0
+    l = len(zones)
+    while i < l:
+        pos_rel = get_position_lidar_from_zone(height, zones[i])
+        pos_drone = uav.get_position()
+        pos_abs_x.append(in_coordinates(pos_rel[0]) + pos_drone[0])
+        pos_abs_y.append(in_coordinates(pos_rel[1]) + pos_drone[1])
+        i = i + 1
+    return pos_abs_x, pos_abs_y
     
 async def get_lidar_zone_over_threshold():
     zone = 0;
@@ -148,10 +161,6 @@ async def get_lidar_zone_over_threshold():
         zone = zone+1;
     return relevant_zones
         
-    
-        
-
-    
 
 def generate_lawnmower_waypoints():
     # Generate 16 internal waypoints. All of them lie inside the flight-zone boundary.
