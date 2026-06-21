@@ -1,10 +1,12 @@
 import asyncio
 from servo import Scanner
+import pigpio
 
 
 async def main():
+    pi = pigpio.pi()
 
-    scanner = Scanner()
+    scanner = Scanner(pi)
 
     try:
         print("Centering...")
