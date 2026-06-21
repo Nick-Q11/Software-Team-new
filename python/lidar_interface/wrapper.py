@@ -37,6 +37,9 @@ lidar_lib.getZoneStrongestReflectance.restype = ctypes.c_int
 lidar_lib.getZoneMostSpads.argtypes = [ctypes.c_void_p]
 lidar_lib.getZoneMostSpads.restype = ctypes.c_int
 
+lidar_lib.getZoneMostSpads_i.argtypes = [ctypes.c_void_p, ctypes.c_int]
+lidar_lib.getZoneMostSpads_i.restype = ctypes.c_int
+
 lidar_lib.checkMaterial.argtypes = [ctypes.c_void_p, ctypes.c_int]
 lidar_lib.checkMaterial.restype = ctypes.c_bool
 
@@ -86,6 +89,11 @@ class LidarSensor:
         zone = lidar_lib.getZoneMostSpads(self._c_ptr)
         spads = self.get_spads_of_zone(zone)
         return zone, spads
+    
+    def get_most_spads_i(self, i: int) -> tuple[int, int]:
+        zone = lidar_lib.getZoneMostSpads_i(self._c_ptr)
+        spads = self.get_spads_of_zone(zone)
+        return zone, spads    
 
     def print_info_matrix(self):
         lidar_lib.printInfoSingle(self._c_ptr)

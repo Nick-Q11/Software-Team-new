@@ -133,6 +133,22 @@ def get_position_lidar_from_zone(height_drone, zone, pitch, yaw):
     pos = x, y
 
     return pos
+
+def get_absolut_lidar(height, ):
+
+    pos_rel = get_position_lidar_from_zone(height, )
+    
+async def get_lidar_zone_over_threshold():
+    zone = 0;
+    relevant_zones = []
+    while zone < 64:
+        zone, spad = LidarSensor.get_most_spads_i(zone)
+        if spad > MARKER_DETECTION_THRESHOLD:
+            relevant_zones.append(zone)
+        zone = zone+1;
+    return relevant_zones
+        
+    
         
 
     
@@ -284,7 +300,7 @@ async def search(
         if not reached:
             continue
 
-        marker_found = await scan(scanner)
+        marker_found = await scan(uav, scanner, waypoint)
 
         if marker_found:
 

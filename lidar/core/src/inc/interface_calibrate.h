@@ -57,6 +57,8 @@ bool checkMaterial(VL53L8CX_calibrate *calib, int spad_threshold);
 
 int getZoneMostSpads(VL53L8CX_calibrate *calib);
 
+int getZoneMostSpads_i(VL53L8CX_calibrate *calib, int i);
+
 int getSpads(VL53L8CX_calibrate *calib, int zone);
 
 int get_ranging_data(VL53L8CX_calibrate *calib);

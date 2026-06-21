@@ -6,7 +6,7 @@ from importlib.resources import files
 from shapely.geometry import Point, Polygon
 from mavsdk import System
 from mavsdk.telemetry import FlightMode
-import haversine
+import haversine as hav
 import numpy as np
 
 NORTH_EAST_CORNER = (49.57069804930975, 11.030361860205034)
@@ -15,7 +15,7 @@ SOUTH_EAST_CORNER = (49.57057898537339, 11.030527456713145)
 SOUTH_WEST_CORNER = (49.57046342304837, 11.030320035396016)
 
 def get_abs_distance(position1, position2):
-    return haversine.haversine(position1[0:2], position2[0:2], unit=haversine.Unit.METERS)
+    return hav.haversine(position1[0:2], position2[0:2], unit=hav.Unit.METERS)
 
 async def takeoff(uav, takeoff_altitude=2.0, vertical_uncertainity=0.2):
     accepted = await uav.arm_and_takeoff(takeoff_altitude=takeoff_altitude)
@@ -48,7 +48,7 @@ async def fly_to_relative_position(uav, rel_position_x, rel_position_y=0.0, rela
     goal_heading_rad = np.arctan2(rel_position_y, rel_position_x) + (current_heading_deg / 180) * np.pi
 
     # Calculate goal position
-    goal_position = haversine.inverse_haversine(point=current_position[0:2], distance=goal_distance, direction=goal_heading_rad, unit=haversine.Unit.METERS)
+    goal_position = hav.inverse_haversine(point=current_position[0:2], distance=goal_distance, direction=goal_heading_rad, unit=hav.Unit.METERS)
     # Fly to position
     accepted = await uav.send_goal_position(goal_position[0], goal_position[1], relative_altitude, current_heading_deg)
     # Wait for UAV to reach position
