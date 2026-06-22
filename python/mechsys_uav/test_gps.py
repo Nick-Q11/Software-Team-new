@@ -10,7 +10,7 @@ from mavsdk.telemetry import FlightMode
 
 
 async def main():
-    serial_device = "dev/ttyS0"
+    serial_device = "/dev/ttyS0"
     usb = 0
     if usb == 1:
         serial_device = serial_device.replace("S0", "ACM0")
@@ -18,7 +18,7 @@ async def main():
         use_sim=False,
         serial_device=serial_device
     )
-
+    print("connected")
     await asyncio.sleep(2)
     try:
         while True:
