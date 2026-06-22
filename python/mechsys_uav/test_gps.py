@@ -10,10 +10,13 @@ from mavsdk.telemetry import FlightMode
 
 
 async def main():
-
+    serial_device = "dev/ttyS0"
+    usb = 0
+    if usb == 1:
+        serial_device = serial_device.replace("S0", "ACM0")
     uav = await UAV.connect(
         use_sim=False,
-        serial_device="/dev/ttyACM0"
+        serial_device=serial_device
     )
 
     await asyncio.sleep(2)
