@@ -112,3 +112,22 @@ class Scanner:
 
         self.yaw.stop()
         self.pitch.stop()
+        
+async def main():
+    pi = pigpio.pi()
+    yaw = Servo(pi, YAW_PIN)
+    pitch = Servo(pi, PITCH_PIN)
+    yaw.set_angle(0)
+    pitch.set_angle(0)
+    
+    
+    for i in range(20):
+        
+        yaw.set_angle(i*9)
+        await asyncio.sleep(1)
+    for i in range(10):
+        pitch.set_angle(i*9)
+        await asyncio.sleep(1)
+
+if __name__ == "__main__":
+    asyncio.run(main())
