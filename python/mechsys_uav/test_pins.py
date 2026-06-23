@@ -1,35 +1,69 @@
 import pigpio
 import keyboard
 import time
+import sys
 
-i = 0
-pin = [5, 6, 19, 26, 12, 13]
+trigger1 = 0
+pin = [14, 15, 10, 9, 11, 8, 5, 6, 12, 13, 19, 26, 20, 21]
 pi = pigpio.pi()
 
-def trigger():
-    global i
-    i = 1
-    pi.write()
+if not pi.connected:
+    sys.exit()
+
+def trigger_f1():
+    global trigger1
+    
+    if trigger1 == 0:
+        trigger1 = 1
 
 def main():
+    global trigger1
     j = 0
-    keyboard.add_hotkey('space', trigger, )
+    keyboard.add_hotkey('space', trigger_f1)
+    print("Press s for start.")
     keyboard.wait('s')
-    pin_name = ["PWR_EN", 29, "LPn", 31, "SPI_I2C_N", 35, "GPIO1", 37, "PWM1", 32, "PWM2", 33]
-    for p in pin:
-        pi.set_mode(p, pigpio.OUTPUT)
-        pi.write(p, 0)
+    pin_name = ["UART-TX", "UART-RX", "MOSI", "MISO", "CLK", "CSe", "PWR_EN", "LPn", "PWM1", "PWM2", "SPI_I2C", "GPIO1", "res1", "res2"]
+    pysical_pin = [8, 10, 19, 21, 23, 24, 29, 31, 32, 33, 35, 37, 38, 40]
+    for gpio in range(2, 28):
+        #print("GPIOs werden auf low gesetzt.")
+        pi.set_mode(gpio, pigpio.OUTPUT)
+        pi.write(gpio, 0)
+    print("Press space to get to next GPIO.\nPress esc to end program. \nPress strg+c to kill program")
     try:
         while True:   
-            if i == 1:
+            if trigger1 == 1:
+                if j == 0:
+                    #print(f"GPIO: {pin[-1]} wird auf low gesetzt.")
+                    pi.write(pin[-1], 0)
+                else:
+                    #print(f"GPIO: {pin[j-1]} wird auf low gesetzt.")
+                    pi.write(pin[j-1], 0)
+                
+                #print(f"GPIO: {pin[j]} wird auf high gesetzt.")
                 pi.write(pin[j], 1)
+                print(f"pin name: {pin_name[j]} pin_phys: {pysical_pin[j]}")
+                
                 j = j+1
-                print(f"pin name: {pin_name[2*j]} pin_phys: {pin_name[2*j+1]}")
-                i = 0
+                trigger1 = 0
+                if j >= (len(pin_name)):
+                    print("Press space to get to first GPIO.")
+                    j = 0
+                    
             if keyboard.is_pressed('esc'):
                 print("beendet: esc")
                 break
+            
+            time.sleep(0.01)
+            
     except KeyboardInterrupt:
         print("beendet: str+c")
-        
+
+    finally:
+        #print("GPIOs werden auf low gesetzt.")
+        for gpio in range(2, 28):
+            pi.write(gpio, 0)
+        pi.stop()
+
+if __name__ == "__main__":
+    main()
     

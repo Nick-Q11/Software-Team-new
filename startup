@@ -1,0 +1,9 @@
+!#/bin/bash
+echo passcode = root
+sudo pigpiod
+cd Documents/Software-Team-new/lidar/core
+sudo make
+cd ..
+cd ..
+source .venv/bin/activate
+cd python/mechsys_uav
