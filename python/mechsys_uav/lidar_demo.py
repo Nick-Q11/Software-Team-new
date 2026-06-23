@@ -44,9 +44,12 @@ async def main():
         return
         
     print("Sensor erfolgreich kalibriert und bereit!")
-    
-  
-    await autonomous(sensor)
+    try:
+        while True:
+            sensor.print_info_matrix()
+            asyncio.sleep(3)
+    except KeyboardInterrupt:
+        print("Ende")
     
 
 if __name__ == "__main__":
