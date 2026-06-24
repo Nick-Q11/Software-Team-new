@@ -171,17 +171,17 @@ int printInfoSingle(VL53L8CX_calibrate *calib)
     int y = 0;
     status = get_ranging_data(calib);
     failure(status, "Failed to get ranging data");
-    printf("Feld;Distanz;Spad;Target\n");
+    //printf("Feld;Distanz;Spad;Target\n");
     for(int i = 0; i < 8; i++){
         for(int j = 0; j < 8; j++){
             y = i*8 + j;
-            printf("%d;%d;%d;%d\n",
+            printf("%d;%d;%d;%d\t |",
             y,
             calib->results.distance_mm[y],
             calib->results.signal_per_spad[y],
             calib->results.target_status[y]);
         }
-        //printf("\n");
+        printf("\n");
     }
     fflush(stdout);
     return 0;
