@@ -296,7 +296,7 @@ size_t getSizeOfCalibrateStruct(void)
 
 bool checkMaterial(VL53L8CX_calibrate *calib, int spad_threshold){
     int zone = getZoneMostSpads(calib);
-    int spads = getDistance(calib, zone);
+    int spads = getSpads(calib, zone);
     if(spads > spad_threshold){
         return true;
     }

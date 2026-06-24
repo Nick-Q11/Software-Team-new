@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 
 libc = ctypes.CDLL(None)
-libc.fflush(None)
+
 
 
 CUDIR = Path(__file__).resolve().parent
@@ -100,10 +100,15 @@ class LidarSensor:
         return zone, spads    
 
     def print_info_matrix(self):
-        lidar_lib.printInfoSingle(self._c_ptr)
+        result = lidar_lib.printInfoSingle(self._c_ptr)
+        libc.fflush(None)
+        return result
         
     def print_info_multiple(self, count: int):
-        lidar_lib.printInfoMultiple(self._c_ptr, count)
+        result = lidar_lib.printInfoMultiple(self._c_ptr, count)
+        libc.fflush(None)
+        return result
+
         
     def get_zone_strongest_reflectance(self) -> int:
         return lidar_lib.getZoneStrongestReflectance(self._c_ptr)
