@@ -2,6 +2,10 @@ import ctypes
 import os
 from pathlib import Path
 
+libc = ctypes.CDLL(None)
+libc.fflush(None)
+
+
 CUDIR = Path(__file__).resolve().parent
 LIBPATH = CUDIR.parents[1] / "lidar" / "core" / "build" / "liblidar.so"
 
