@@ -51,6 +51,7 @@ void powerON(void)
 
 int calibrate(VL53L8CX_calibrate *calib)
 {
+    printf("calibrate called\n");
 
     int status;
     int i = 20; // Max wait time of 2 seconds for data ready
@@ -108,14 +109,17 @@ uint8_t calibrate_glass( VL53L8CX_calibrate *calib, uint16_t distance_mm, uint16
 int get_ranging_data(VL53L8CX_calibrate *calib)
 {
     int status = 0;
-    //int16_t value = 0;
-    uint8_t j = 10;
-    //uint8_t valid = 0;
+    int16_t value = 0;
+    uint8_t j = 20;
+    uint8_t valid = 0;
 
     if(calib->calibrated != 1){
         calibrate(calib);
     }
-    //do{
+
+    //printf("data_is_ready = %p\n", calib->data_is_ready);
+
+    do{
         status = vl53l8cx_check_data_ready(&calib->conf, calib->data_is_ready);
         if(status != 0){
             j --;
@@ -123,26 +127,37 @@ int get_ranging_data(VL53L8CX_calibrate *calib)
                 failure(status, "Data not ready after waiting");
                 return status;
             }
-
-            //continue;
         }
-        //j = 20;
+        //printf("check data");
+        sleep_ms(10);
+        if(status == 0 || j < 1){
+            break;
+        }
+    }
+    while(1);
+    j = 20;
+    do{
+
         status = vl53l8cx_get_ranging_data(&calib->conf, &calib->results);
-        /*valid = 1;
+        valid = 1;
         for(int i = 0; i < 64; i++){
-            if(calib->results.target_status[i] == 0 || calib->results.target_status[i] == 255){
-                valid = 0;
-                break;
-            }
             value = calib->results.distance_mm[i];
             if(value < 0){
                 valid = 0;
                 break;
             }
         }
-
+        j--;
         sleep_ms(10);
-    }while(!valid && j > 1);*/
+        //printf("valid = %d\n", valid);
+        if(valid == 0 && j > 0){
+            //printf("valid = %d\n", valid);
+            continue;
+        }
+        if(status == 0 || j < 1){
+            break;
+        }
+    }while(1);
 
     return status;
 }
@@ -156,16 +171,17 @@ int printInfoSingle(VL53L8CX_calibrate *calib)
     int y = 0;
     status = get_ranging_data(calib);
     failure(status, "Failed to get ranging data");
+    printf("Feld;Distanz;Spad;Target\n");
     for(int i = 0; i < 8; i++){
         for(int j = 0; j < 8; j++){
             y = i*8 + j;
-            printf("%d:%d mm, %d s, %d t\t|",
+            printf("%d;%d;%d;%d\n",
             y,
             calib->results.distance_mm[y],
             calib->results.signal_per_spad[y],
             calib->results.target_status[y]);
         }
-        printf("\n");
+        //printf("\n");
     }
     fflush(stdout);
     return 0;

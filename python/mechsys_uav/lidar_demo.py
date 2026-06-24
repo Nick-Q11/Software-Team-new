@@ -45,9 +45,9 @@ async def main():
         
     print("Sensor erfolgreich kalibriert und bereit!")
     try:
-        while True:
-            sensor.print_info_matrix()
-            await asyncio.sleep(3)
+        
+        sensor.print_info_multiple(10)
+        await asyncio.sleep(3)
     except KeyboardInterrupt:
         print("Ende")
     
