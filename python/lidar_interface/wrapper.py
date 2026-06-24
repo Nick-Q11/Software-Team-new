@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 
 libc = ctypes.CDLL(None)
-
+libc.fflush(None)
 
 
 CUDIR = Path(__file__).resolve().parent

@@ -108,14 +108,14 @@ uint8_t calibrate_glass( VL53L8CX_calibrate *calib, uint16_t distance_mm, uint16
 int get_ranging_data(VL53L8CX_calibrate *calib)
 {
     int status = 0;
-    int16_t value = 0;
+    //int16_t value = 0;
     uint8_t j = 10;
-    uint8_t valid = 0;
+    //uint8_t valid = 0;
 
     if(calib->calibrated != 1){
         calibrate(calib);
     }
-    do{
+    //do{
         status = vl53l8cx_check_data_ready(&calib->conf, calib->data_is_ready);
         if(status != 0){
             j --;
@@ -124,11 +124,11 @@ int get_ranging_data(VL53L8CX_calibrate *calib)
                 return status;
             }
 
-            continue;
+            //continue;
         }
-        j = 20;
+        //j = 20;
         status = vl53l8cx_get_ranging_data(&calib->conf, &calib->results);
-        valid = 1;
+        /*valid = 1;
         for(int i = 0; i < 64; i++){
             if(calib->results.target_status[i] == 0 || calib->results.target_status[i] == 255){
                 valid = 0;
@@ -142,7 +142,7 @@ int get_ranging_data(VL53L8CX_calibrate *calib)
         }
 
         sleep_ms(10);
-    }while(!valid && j > 1);
+    }while(!valid && j > 1);*/
 
     return status;
 }
@@ -167,6 +167,7 @@ int printInfoSingle(VL53L8CX_calibrate *calib)
         }
         printf("\n");
     }
+    fflush(stdout);
     return 0;
 }
 
