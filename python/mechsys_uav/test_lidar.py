@@ -4,7 +4,11 @@ import pigpio
 from servo import Scanner
 import sys
 from pathlib import Path
-
+import json
+from importlib.resources import files
+from shapely.geometry import Point, Polygon
+from mavsdk import System
+from mavsdk.telemetry import FlightMode
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 sys.path.append(str(BASE_DIR))
@@ -14,7 +18,7 @@ from lidar_interface.wrapper import LidarSensor
 
 async def vibration_test(lidar_sensor: LidarSensor, gimbal: Scanner):   
     zone_d = 64;
-    closest_distance = 2000 # 2m als default-Wert
+    closest_distance = 3000 # 3m als default-Wert
     zone_s = 64;
     highest_spads = 0 # 0 als default Wert
     
@@ -39,7 +43,7 @@ async def vibration_test(lidar_sensor: LidarSensor, gimbal: Scanner):
     except KeyboardInterrupt:
         print("Vibrationstest beendet.")
     finally:
-        gimbal.center()
+        #gimbal.center()
         print("Gimbal in Mittelstellung zurückgesetzt.")
         
 async def find_target(lidar_sensor: LidarSensor):
@@ -51,15 +55,12 @@ async def find_target(lidar_sensor: LidarSensor):
             print()
     except KeyboardInterrupt:
         print("find_target beendet")
-    
-    
-    
 
 async def main():
     
     uav = await UAV.connect(
         use_sim=False,
-        serial_device="/dev/cu.usbmodem01"
+        serial_device="/dev/ttyS0"
     )
     
     print("UAV connected.")
@@ -68,7 +69,7 @@ async def main():
     uav.arm_and_takeoff(2)  # Take off to 2 meters altitude
     
     gimbal = Scanner()
-    gimbal.center()
+    #gimbal.center()
     
     lidar_sensor = LidarSensor()
     if lidar_sensor.init_and_calibrate() != 0:
