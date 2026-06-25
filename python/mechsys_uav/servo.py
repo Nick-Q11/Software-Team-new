@@ -118,31 +118,11 @@ async def main():
     pi = pigpio.pi()
     pi.set_servo_pulsewidth(PITCH_PIN, 0)
     time.sleep(1)
+    servo = Servo(pi, PITCH_PIN)
     try:
-        for i in range(10):
-            print(i)
-            pi.set_servo_pulsewidth(PITCH_PIN, (i*100+1000))
-            time.sleep(3)
+        servo.set_angle(0)
     except KeyboardInterrupt:
         print("ende")
-
-    #yaw = Servo(pi, YAW_PIN)
-    #print("0")
-    #pitch = Servo(pi, PITCH_PIN)
-   # print("1")
-    #yaw.set_angle(0)
-   # pitch.set_angle(0)
-    
-  #  print("2")
-    
-    #for i in range(20):
-        
-        #yaw.set_angle(i*9)
-        #await asyncio.sleep(1)
-  #  for i in range(10):
-   #     print(i)
-   #     pitch.set_angle(i*9)
-   #     await asyncio.sleep(1)
 
 if __name__ == "__main__":
     asyncio.run(main())

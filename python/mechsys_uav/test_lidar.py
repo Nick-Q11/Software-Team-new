@@ -58,15 +58,15 @@ async def find_target(lidar_sensor: LidarSensor):
 
 async def main():
     
-    uav = await UAV.connect(
-        use_sim=False,
-        serial_device="/dev/ttyS0"
-    )
+    #uav = await UAV.connect(
+    #    use_sim=False,
+    #    serial_device="/dev/ttyS0"
+    #)
     
-    print("UAV connected.")
-    await asyncio.sleep(2)
+    #print("UAV connected.")
+    #await asyncio.sleep(2)
     
-    uav.arm_and_takeoff(2)  # Take off to 2 meters altitude
+    #uav.arm_and_takeoff(2)  # Take off to 2 meters altitude
     
     gimbal = Scanner()
     #gimbal.center()
@@ -79,7 +79,7 @@ async def main():
     
     await vibration_test(lidar_sensor, gimbal)
     
-    uav.land()
+    #uav.land()
     
 if __name__ == "__main__":
     asyncio.run(main())
