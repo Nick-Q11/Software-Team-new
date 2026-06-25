@@ -1,6 +1,7 @@
 !#/bin/bash
 echo passcode = root
 sudo pigpiod
+sudo chmod 666 /dev/ttyS0
 cd Documents/Software-Team-new/lidar/core
 sudo make
 cd ..

@@ -17,12 +17,16 @@ BASE_DIR = Path(__file__).resolve().parents[1]
 sys.path.append(str(BASE_DIR))
 
 from lidar_interface.wrapper import LidarSensor
+async def main():
 
-uav = UAV.connect(
-        use_sim=False,
-        serial_device="/dev/ttyS0"
-    )
-
-time.sleep(2)
+    uav = await UAV.connect(
+            use_sim=False,
+            serial_device="/dev/ttyS0"
+            )
     
-print("UAV connected.")
+    print("UAV connected.")
+    asyncio.sleep(2)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
