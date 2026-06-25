@@ -70,7 +70,13 @@ async def main():
     print("UAV connected.")
     await asyncio.sleep(2)
     
-    uav.arm_and_takeoff(2)  # Take off to 2 meters altitude
+    await uav.arm_and_takeoff(2)# Take off to 2 meters altitude
+    position = await uav.get_position()
+    await uav.check_goal_position(latitude=49.57080000000000, longitude=11.03025000000000, relative_altitude=2)
+    await uav.send_goal_position(latitude=49.57080000000000, longitude=11.03025000000000, relative_altitude=2)
+    await asyncio.sleep(5)
+    await uav.send_goal_position(latitude=position[0], longitude=position[1], relative_altitude=position[2])
+
     pi = pigpio.pi()
     pitch = Servo(pi, 13)
     
