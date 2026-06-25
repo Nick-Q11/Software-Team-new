@@ -1,7 +1,7 @@
 import asyncio
 from mechsys_uav import UAV
 import pigpio
-from servo import Scanner
+from servo import Scanner, Servo
 import sys
 from pathlib import Path
 import json
@@ -17,9 +17,9 @@ from lidar_interface.wrapper import LidarSensor
 
 
 async def vibration_test(lidar_sensor: LidarSensor, gimbal: Scanner):   
-    zone_d = 64;
-    closest_distance = 3000 # 3m als default-Wert
-    zone_s = 64;
+    zone_d = 64
+    closest_distance = 5000 # 3m als default-Wert
+    zone_s = 64
     highest_spads = 0 # 0 als default Wert
     
     print("Vibrationstest gestartet. Überwache LiDAR-Matrix...")
@@ -43,8 +43,12 @@ async def vibration_test(lidar_sensor: LidarSensor, gimbal: Scanner):
     except KeyboardInterrupt:
         print("Vibrationstest beendet.")
     finally:
-        #gimbal.center()
+        gimbal.center()
         print("Gimbal in Mittelstellung zurückgesetzt.")
+        
+    
+
+
         
 async def find_target(lidar_sensor: LidarSensor):
     try:
@@ -58,28 +62,34 @@ async def find_target(lidar_sensor: LidarSensor):
 
 async def main():
     
-    #uav = await UAV.connect(
-    #    use_sim=False,
-    #    serial_device="/dev/ttyS0"
-    #)
+    uav = await UAV.connect(
+        use_sim=False,
+        serial_device="/dev/ttyS0"
+    )
     
-    #print("UAV connected.")
-    #await asyncio.sleep(2)
+    print("UAV connected.")
+    await asyncio.sleep(2)
     
-    #uav.arm_and_takeoff(2)  # Take off to 2 meters altitude
+    uav.arm_and_takeoff(2)  # Take off to 2 meters altitude
+    pi = pigpio.pi()
+    pitch = Servo(pi, 13)
     
     gimbal = Scanner()
-    #gimbal.center()
+    gimbal.center()
     
     lidar_sensor = LidarSensor()
     if lidar_sensor.init_and_calibrate() != 0:
         print("Kritischer Fehler: Sensor-Kalibrierung fehlgeschlagen!")
         return
     print("Sensor erfolgreich kalibriert und bereit!")
+    pitch.set_angle(45)
+    await vibration_test(lidar_sensor, gimbal)
+    
+    pitch.set_angle(45)
     
     await vibration_test(lidar_sensor, gimbal)
     
-    #uav.land()
+    uav.land()
     
 if __name__ == "__main__":
     asyncio.run(main())
