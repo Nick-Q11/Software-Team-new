@@ -2,6 +2,7 @@ import asyncio
 import haversine as hav
 from mechsys_uav import UAV
 from servo import Scanner
+import pigpio
 
 
 # Flight Zone Corners
