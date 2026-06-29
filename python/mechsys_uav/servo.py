@@ -120,7 +120,7 @@ async def main():
     time.sleep(1)
     servo = Servo(pi, PITCH_PIN)
     try:
-        servo.set_angle(0)
+        servo.set_angle(90)
     except KeyboardInterrupt:
         print("ende")
 

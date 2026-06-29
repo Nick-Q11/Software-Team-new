@@ -16,7 +16,7 @@ sys.path.append(str(BASE_DIR))
 from lidar_interface.wrapper import LidarSensor
 
 
-async def vibration_test(lidar_sensor: LidarSensor, gimbal: Scanner):   
+async def vibration_test(lidar_sensor: LidarSensor):   
     zone_d = 64
     closest_distance = 5000 # 3m als default-Wert
     zone_s = 64
@@ -43,7 +43,7 @@ async def vibration_test(lidar_sensor: LidarSensor, gimbal: Scanner):
     except KeyboardInterrupt:
         print("Vibrationstest beendet.")
     finally:
-        gimbal.center()
+        #gimbal.center()
         print("Gimbal in Mittelstellung zurückgesetzt.")
         
     
@@ -61,7 +61,7 @@ async def find_target(lidar_sensor: LidarSensor):
         print("find_target beendet")
 
 async def main():
-    
+    """
     uav = await UAV.connect(
         use_sim=False,
         serial_device="/dev/ttyS0"
@@ -76,26 +76,21 @@ async def main():
     await uav.send_goal_position(latitude=49.57080000000000, longitude=11.03025000000000, relative_altitude=2)
     await asyncio.sleep(5)
     await uav.send_goal_position(latitude=position[0], longitude=position[1], relative_altitude=position[2])
-
-    pi = pigpio.pi()
-    pitch = Servo(pi, 13)
-    
-    gimbal = Scanner()
-    gimbal.center()
+"""
     
     lidar_sensor = LidarSensor()
     if lidar_sensor.init_and_calibrate() != 0:
         print("Kritischer Fehler: Sensor-Kalibrierung fehlgeschlagen!")
         return
     print("Sensor erfolgreich kalibriert und bereit!")
-    pitch.set_angle(45)
-    await vibration_test(lidar_sensor, gimbal)
+    #pitch.set_angle(45)
+    await vibration_test(lidar_sensor)
     
-    pitch.set_angle(45)
+    #pitch.set_angle(45)
     
-    await vibration_test(lidar_sensor, gimbal)
+    #await vibration_test(lidar_sensor)
     
-    uav.land()
+    #uav.land()
     
 if __name__ == "__main__":
     asyncio.run(main())
