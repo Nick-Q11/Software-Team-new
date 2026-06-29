@@ -12,11 +12,6 @@ import sys
 from pathlib import Path
 import time
 
-
-BASE_DIR = Path(__file__).resolve().parents[1]
-sys.path.append(str(BASE_DIR))
-
-from lidar_interface.wrapper import LidarSensor
 async def main():
 
     uav = await UAV.connect(
@@ -26,6 +21,8 @@ async def main():
     
     print("UAV connected.")
     asyncio.sleep(2)
+
+    uav.arm_and_takeoff(2)
 
 
 if __name__ == "__main__":
