@@ -77,17 +77,6 @@ class Scanner:
 
         return measurements
 
-    async def coarse_scan(self):
-        """
-        3 x 3 scan grid.
-        """
-
-        return await self._serpentine_sweep(
-            yaw_values=[-90, 0, 90],
-            pitch_values=[-90, -45, 0],
-            dwell_s=0.5,
-        )
-
     async def scan(self):
         """
         Main scan function.
@@ -100,9 +89,45 @@ class Scanner:
             ]
         """
 
-        measurements = await self.coarse_scan()
+        return await self._serpentine_sweep(
+            yaw_values=[-90, 0, 90],
+            pitch_values=[-90, -45, 0],
+            dwell_s=0.5,
+        )
 
-        return measurements
+    async def run(
+            self,
+            yaw_values=[-90, -60, -30, 0, 30, 60, 90],
+            pitch=-45,
+            dwell_s=0.15,
+    ):
+        """
+        Continuous horizontal scan.
+        """
+
+        self.pitch.set_angle(90 + pitch)
+
+        try:
+
+            while True:
+
+                # Left -> Right
+                for yaw in yaw_values:
+                    self.yaw.set_angle(90 + yaw)
+
+                    await asyncio.sleep(dwell_s)
+
+                # Right -> Left
+                for yaw in reversed(yaw_values[1:-1]):
+                    self.yaw.set_angle(90 + yaw)
+
+                    await asyncio.sleep(dwell_s)
+
+        except asyncio.CancelledError:
+            pass
+
+        finally:
+            self.center()
 
     def center(self):
         self.yaw.set_angle(90)
