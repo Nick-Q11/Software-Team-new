@@ -22,7 +22,7 @@ async def main():
     print("UAV connected.")
     asyncio.sleep(2)
 
-    uav.arm_and_takeoff(2)
+   # uav.arm_and_takeoff(2)
 
 
 if __name__ == "__main__":
