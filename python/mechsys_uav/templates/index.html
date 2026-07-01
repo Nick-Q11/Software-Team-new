@@ -119,17 +119,20 @@
     <script>
         // Function to fetch latest coordinates from server
         async function fetchLocation() {
+           
+            
             try {
-                const response = await fetch('/get_position');
+                const response = await fetch('/get_location');
                 const data = await response.json();
-                
+                const latitude = data.latitude;
+                const longitude = data.longitude;
                 if (latitude !== 0 || longitude !== 0) {
                     // Update display
-                    document.getElementById('latitude').textContent = data.latitude.toFixed(6);
-                    document.getElementById('longitude').textContent = data.longitude.toFixed(6);
+                    document.getElementById('latitude').textContent = latitude.toFixed(6);
+                    document.getElementById('longitude').textContent = longitude.toFixed(6);
                     document.getElementById('status').textContent = '✅ Live';
                     document.getElementById('status').style.background = '#4CAF50';
-                    
+                    document.getElementById('timestamp').textContent = new Date().toLocaleTimeString();
                 } else {
                     document.getElementById('status').textContent = '⏳ Waiting for GPS data...';
                     document.getElementById('status').style.background = '#FF9800';
@@ -139,6 +142,7 @@
                 document.getElementById('status').textContent = '❌ Connection error';
                 document.getElementById('status').style.background = '#f44336';
             }
+                
         }
         
         // Fetch location every 2 seconds
