@@ -6,10 +6,19 @@ from marker_detector import MarkerDetection
 GRID_SIZE = 8
 FOV = 45.0
 
+#höhere Genauigkeit des Winkels, Centers
+
+STEP = 5.625
+CENTER = 3.5
+
+def zone_id_to_col_row(zone_id: int, grid_size=GRID_SIZE) -> tuple[int, int]:
+    row = zone_id // grid_size
+    col = zone_id % grid_size
+    return col, row
 
 def zone_to_angles(row: float, col: float) -> tuple[float, float]:
-    step = FOV / GRID_SIZE
-    center = (GRID_SIZE - 1) / 2.0
+    step = STEP
+    center = CENTER
     # col = center - col   VL53L8 horizontal mirror?
     yaw = col * step
     pitch = (center - row) * step

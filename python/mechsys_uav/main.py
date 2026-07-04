@@ -2,7 +2,6 @@ import asyncio
 import numpy as np
 from mechsys_uav import UAV
 import haversine
-import search
 import search2
 import telemetry
 import pigpio
