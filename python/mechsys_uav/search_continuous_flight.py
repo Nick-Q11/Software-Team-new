@@ -152,12 +152,16 @@ def generate_search_path():
 async def fly_to_marker(uav: UAV, lidar: LidarSensor, scanner: Scanner, stop_point):
     position = stop_point
     found = False
+    last_spad = None
+    
     while True:
         marker = MarkerDetector(lidar).detect()
         if marker is None:
             found = False
             position = stop_point
             break
+        last_spad = marker.spad
+        
         if marker.zone in ZONE_FOUND:
             found = True
             break
@@ -175,12 +179,15 @@ async def fly_to_marker(uav: UAV, lidar: LidarSensor, scanner: Scanner, stop_poi
     await fly_to_position(uav, stop_point)
     
     if found:
-        return position, marker.spad
+        return position, last_spad
     
-    return None
+    return None, None
 
-async def check_marker(marker, found_marker_list, stop_point, scanner):
-    pass
+def check_marker(marker, found_marker_list, stop_point, scanner):
+    if not found_marker_list:
+        return False
+    
+    
 
 async def search(uav, lidar, scanner):
     known = False
@@ -270,6 +277,9 @@ async def main():
     marker_list = await search(uav, lidar, scanner)
 
     print("\nMission complete.")
+    print("Found markers at the following positions sort by SPAD:")
+    for i, position in enumerate(marker_list):
+        print(f"{i+1}: {position}")
 
     # Stop scanner
     scanner_task.cancel()
