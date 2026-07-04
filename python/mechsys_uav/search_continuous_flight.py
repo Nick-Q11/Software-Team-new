@@ -5,6 +5,7 @@ from servo import Scanner
 import pigpio
 from marker_detector import MarkerDetector
 import lidar_geometry
+import server_back_end
 import sys
 from pathlib import Path
 
