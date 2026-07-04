@@ -137,9 +137,8 @@ def generate_search_path():
     return path
 
 
-# ----------------------------------------------------------------------
 # Search Mission
-# ----------------------------------------------------------------------
+
 
 async def search(uav):
 
@@ -162,9 +161,8 @@ async def search(uav):
         )
 
 
-# ----------------------------------------------------------------------
 # Main
-# ----------------------------------------------------------------------
+
 
 async def main():
 
@@ -189,7 +187,7 @@ async def main():
     await takeoff(uav)
 
     # Start continuous scan
-    scanner_task = asyncio.create_task(scanner.run())
+    scanner_task = asyncio.create_task(scanner.continuous_scan())
 
     # Execute search mission
     await search(uav)
