@@ -1,6 +1,6 @@
 import numpy as np
 import haversine
-from marker_detector import MarkerDetection
+#from marker_detector import MarkerDetection
 
 
 GRID_SIZE = 8
@@ -14,14 +14,18 @@ CENTER = 3.5
 def zone_id_to_col_row(zone_id: int, grid_size=GRID_SIZE) -> tuple[int, int]:
     row = zone_id // grid_size
     col = zone_id % grid_size
-    return col, row
+    #grid um 90 Grad gedreht
+    row_n = col
+    col_n = grid_size - 1 - row
+    return col_n, row_n
 
 def zone_to_angles(row: float, col: float) -> tuple[float, float]:
     step = STEP
     center = CENTER
-    # col = center - col   VL53L8 horizontal mirror?
-    yaw = col * step
+    yaw = (col - center) * step
     pitch = (center - row) * step
+    #more positive pitch --> more northward from center
+    #more positive yaw --> more eastward from center
     return yaw, pitch
 
 
@@ -82,14 +86,15 @@ def lidar_to_gps(
     drone_yaw: float,
     servo_yaw: float,
     servo_pitch: float,
-    row: float,
-    col: float,
+    zone_id: int,
     distance: float,
 ) -> tuple[float, float]:
 
     if distance < 0:
         raise ValueError("distance must be non-negative")
 
+    col, row = zone_id_to_col_row(zone_id)
+    
     yaw, pitch = zone_to_angles(row, col)
 
 
@@ -107,6 +112,7 @@ def lidar_to_gps(
         @ rotation_matrix_x(drone_roll)
         @ point
     )
+    
 
     north, east, _ = point
 
@@ -119,14 +125,13 @@ if __name__ == "__main__":
     lat, lon = lidar_to_gps(
         drone_lat=49.570620,
         drone_lon=11.030250,
-        drone_roll=2.5,
-        drone_pitch=-1.2,
-        drone_yaw=35.0,
-        servo_yaw=20.0,
-        servo_pitch=-30.0,
-        row=5,
-        col=2,
-        distance=2.45,
+        drone_roll=0,
+        drone_pitch=0,
+        drone_yaw=0,
+        servo_yaw=90,
+        servo_pitch=90,
+        zone_id=63,
+        distance=2,
     )
 
-    print(f"Marker GPS: {lat:.8f}, {lon:.w8f}")
+    print(f"Marker GPS: {lat:.8f}, {lon:.8f}")
