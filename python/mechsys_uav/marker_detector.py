@@ -1,5 +1,10 @@
-from lidar_interface.wrapper import LidarSensor
+import sys
+from pathlib import Path
 from dataclasses import dataclass
+BASE_DIR = Path(__file__).resolve().parents[1]
+sys.path.append(str(BASE_DIR))
+
+from lidar_interface.wrapper import LidarSensor
 
 
 SPAD_THRESHOLD = 10000
@@ -8,8 +13,6 @@ SPAD_THRESHOLD = 10000
 @dataclass
 class MarkerDetection:
     zone: int
-    row: float
-    col: float
     distance: float
     spad: int
 
@@ -26,15 +29,10 @@ class MarkerDetector:
         if spad < SPAD_THRESHOLD:
             return None
 
-        row = zone // 8
-        col = zone % 8
-
         distance = self.lidar.get_distance(zone)
 
         return MarkerDetection(
             zone=zone,
-            row=row,
-            col=col,
             distance=distance,
             spad=spad,
         )

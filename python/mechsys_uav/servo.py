@@ -17,13 +17,16 @@ class Servo:
     def __init__(self, pi, pin):
         self.pi = pi
         self.pin = pin
+        self.val = 0
 
     def set_angle(self, angle_deg: float):
         pulse = angle_to_pwm_us(angle_deg)
         self.pi.set_servo_pulsewidth(self.pin, pulse)
+        self.val = angle_deg
 
     def stop(self):
         self.pi.set_servo_pulsewidth(self.pin, 0)
+        self.val = 0
 
 
 class Scanner:
@@ -95,7 +98,7 @@ class Scanner:
             dwell_s=0.5,
         )
 
-    async def continuous_scan()(
+    async def continuous_scan(
             self,
             yaw_values=[-90, -60, -30, 0, 30, 60, 90],
             pitch=-45,

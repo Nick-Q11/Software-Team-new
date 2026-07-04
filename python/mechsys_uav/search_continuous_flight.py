@@ -3,7 +3,15 @@ import haversine as hav
 from mechsys_uav import UAV
 from servo import Scanner
 import pigpio
+from marker_detector import MarkerDetector
+import lidar_geometry
+import sys
+from pathlib import Path
 
+BASE_DIR = Path(__file__).resolve().parents[1]
+sys.path.append(str(BASE_DIR))
+
+from lidar_interface.wrapper import LidarSensor
 
 # Flight Zone Corners
 
@@ -21,6 +29,8 @@ FLIGHT_ALTITUDE = 2.0
 POSITION_TOLERANCE = 0.5
 
 ROW_SPACING = 2.0     # meters
+
+ZONE_FOUND = [27, 28, 35, 36]  # Zones where the marker is expected to be found
 
 
 # Helper Functions
@@ -139,10 +149,47 @@ def generate_search_path():
 
 # Search Mission
 
+async def fly_to_marker(uav: UAV, lidar: LidarSensor, scanner: Scanner, stop_point):
+    position = stop_point
+    found = False
+    while True:
+        marker = MarkerDetector(lidar).detect()
+        if marker is None:
+            found = False
+            position = stop_point
+            break
+        if marker.zone in ZONE_FOUND:
+            found = True
+            break
+        attitude = uav.get_attitude()
+        position = lidar_geometry.lidar_to_gps(stop_point[0],
+                                              stop_point[1],
+                                              attitude[1],
+                                              attitude[0],
+                                              attitude[2],
+                                              scanner.yaw.val,
+                                              scanner.pitch.val,
+                                              marker.zone,
+                                              marker.distance)
+        await fly_to_position(uav, position)
+    await fly_to_position(uav, stop_point)
+    
+    if found:
+        return position, marker.spad
+    
+    return None
 
-async def search(uav):
+async def check_marker(marker, found_marker_list, stop_point, scanner):
+    pass
 
+async def search(uav, lidar, scanner):
+    known = False
+    marker_position = None
+    marker_detector = MarkerDetector(lidar)
     path = generate_search_path()
+    found_marker_list = []
+    found_marker_spad_list = []
+    sort_marker_list = []
 
     print("\nGenerated Search Path:\n")
 
@@ -152,6 +199,7 @@ async def search(uav):
     print()
 
     for i, waypoint in enumerate(path):
+            
 
         print(f"Flying to waypoint {i+1}/{len(path)}")
 
@@ -159,7 +207,34 @@ async def search(uav):
             uav,
             waypoint,
         )
-
+        
+        marker = await marker_detector.detect()
+        await asyncio.sleep(0.1)
+        
+        if marker:
+            print(f"Marker detected in zone {marker.zone} with SPAD {marker.spad}")
+            stop_point = uav.get_position()
+            known = check_marker(marker, found_marker_list, stop_point, scanner)
+               
+            if known:
+                print(f"Marker bekannt.")
+                
+            else:
+                await fly_to_position(uav, stop_point,)
+                marker_position, marker_spad = await fly_to_marker(uav, lidar, scanner, stop_point)
+                if marker_position is not None:
+                    found_marker_list.append(marker_position)
+                    found_marker_spad_list.append(marker_spad)
+                    sort_marker_list = [x for _, x in sorted(zip(found_marker_spad_list, found_marker_list),
+                                                             key=lambda pair: pair[0],
+                                                             reverse=True)]
+            await fly_to_position(uav, waypoint)
+    
+    return sort_marker_list
+            
+            
+            
+                
 
 # Main
 
@@ -182,6 +257,8 @@ async def main():
 
     scanner = Scanner(pi)
     scanner.center()
+    
+    lidar = LidarSensor()
 
     # Takeoff
     await takeoff(uav)
@@ -190,7 +267,7 @@ async def main():
     scanner_task = asyncio.create_task(scanner.continuous_scan())
 
     # Execute search mission
-    await search(uav)
+    marker_list = await search(uav, lidar, scanner)
 
     print("\nMission complete.")
 
