@@ -95,7 +95,7 @@ class Scanner:
             dwell_s=0.5,
         )
 
-    async def continuous_sweep()(
+    async def continuous_scan()(
             self,
             yaw_values=[-90, -60, -30, 0, 30, 60, 90],
             pitch=-45,
