@@ -63,17 +63,26 @@ async def takeoff(uav,
         takeoff_altitude=takeoff_altitude
     )
 
+    if not accepted:
+        print("Takeoff wurde vom UAV abgelehnt!")
+        return False
+    
     while accepted:
 
         await asyncio.sleep(0.1)
+        
+        position = uav.get_position()
+        if position is None:
+            print("Verbindung zum UAV während des Takeoffs verloren!")
+            break
+        
+        print(f"Altitude: {position[2]:.2f} m")
 
-        altitude = uav.get_position()[2]
-
-        print(f"Altitude: {altitude:.2f} m")
-
-        if altitude >= takeoff_altitude - vertical_uncertainity:
+        if position[2] >= takeoff_altitude - vertical_uncertainity:
             print("Reached takeoff altitude.")
             break
+        
+        return True
 
 
 async def fly_to_position(
@@ -87,12 +96,20 @@ async def fly_to_position(
         goal_position[1],
         relative_altitude,
     )
+    
+    if not accepted:
+        print(f"Flugbefehl zu {goal_position} wurde abgelehnt!")
+        return False
 
     while accepted:
 
         await asyncio.sleep(0.1)
 
         current_position = uav.get_position()
+        
+        if current_position is None:
+            print("Verbindung zum UAV während des Fluges verloren!")
+            break
 
         distance = get_abs_distance(
             current_position,
@@ -183,10 +200,29 @@ async def fly_to_marker(uav: UAV, lidar: LidarSensor, scanner: Scanner, stop_poi
     
     return None, None
 
-def check_marker(marker, found_marker_list, stop_point, scanner):
+def check_marker(marker, found_marker_list, stop_point, attitude, scanner):
     if not found_marker_list:
         return False
     
+    position = lidar_geometry.lidar_to_gps(stop_point[0],
+                                            stop_point[1],
+                                            attitude[1],
+                                            attitude[0],
+                                            attitude[2],
+                                            scanner.yaw.val,
+                                            scanner.pitch.val,
+                                            marker.zone,
+                                            marker.distance)
+    
+    position_tuple = (position[0], position[1])
+    
+    for known_gps in found_marker_list:
+        known_marker = (known_gps[0], known_gps[1])
+        radius = hav.haversine(position_tuple, known_marker, unit=hav.Unit.METERS)
+        if radius < 2.0:
+            return True
+        
+    return False
     
 
 async def search(uav, lidar, scanner):
@@ -221,7 +257,8 @@ async def search(uav, lidar, scanner):
         if marker:
             print(f"Marker detected in zone {marker.zone} with SPAD {marker.spad}")
             stop_point = uav.get_position()
-            known = check_marker(marker, found_marker_list, stop_point, scanner)
+            attitude = uav.get_attitude()
+            known = check_marker(marker, found_marker_list, stop_point, attitude, scanner)
                
             if known:
                 print(f"Marker bekannt.")
@@ -233,7 +270,7 @@ async def search(uav, lidar, scanner):
                     found_marker_list.append(marker_position)
                     found_marker_spad_list.append(marker_spad)
                     sort_marker_list = [x for _, x in sorted(zip(found_marker_spad_list, found_marker_list),
-                                                             key=lambda pair: pair[0],
+                                                             key=lambda x: x[0],
                                                              reverse=True)]
             await fly_to_position(uav, waypoint)
     
