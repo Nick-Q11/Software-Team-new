@@ -1,11 +1,5 @@
 [project]
 name = "software-team-new"
 version = "0.1.0"
-requires-python = ">=3.13"
-dependencies = [
-    "mechsys-uav",
-    "pigpio>=1.78",
-]
-
-[tool.uv.sources]
-mechsys-uav = { git = "https://github.com/leon-seidel/mechsys-uav.git" }
+requires-python = ">=3.12"
+dependencies = []
