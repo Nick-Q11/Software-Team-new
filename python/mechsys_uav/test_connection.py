@@ -11,19 +11,19 @@ from servo import Scanner
 import sys
 from pathlib import Path
 import time
+import telemetry_client
 
 async def main():
-
-    uav = await UAV.connect(
-            use_sim=False,
-            serial_device="/dev/ttyS0"
-            )
+    client = telemetry_client.TelemetryClient(server_ip = "127.0.0.1", server_port = 5000)
+    client.start()
+    client.update_location(4.0, 10.0)
     
-    print("UAV connected.")
-    asyncio.sleep(2)
-
-   # uav.arm_and_takeoff(2)
-
-
+    await asyncio.sleep(5)  # Wait for a few seconds to allow the client to send data
+    client.update_location(5.0, 11.0)
+    await asyncio.sleep(5)  # Wait for a few seconds to allow the client to send
+    
+    client.stop()
+    
 if __name__ == "__main__":
     asyncio.run(main())
+    

@@ -56,7 +56,8 @@ def handle_update_position():
     return jsonify({"status": "error", "message": "Invalid data"}), 400
 
 def main():
-    threading.Thread(target=simuliere_drohne, daemon=True).start()
+    #threading.Thread(target=send_position, args=(0.0, 0.0), daemon=True).start()
+    update_location(latitude=4.0, longitude=10.0)
     app.run(host='0.0.0.0', port=5000, debug=False)
 
 if __name__ == '__main__':

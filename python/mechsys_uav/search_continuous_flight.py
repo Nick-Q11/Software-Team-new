@@ -5,7 +5,7 @@ from servo import Scanner
 import pigpio
 from marker_detector import MarkerDetector
 import lidar_geometry
-import server_back_end
+from telemetry_client import TelemetryClient
 import sys
 from pathlib import Path
 
@@ -226,7 +226,7 @@ def check_marker(marker, found_marker_list, stop_point, attitude, scanner):
     return False
     
 
-async def search(uav, lidar, scanner):
+async def search(uav, lidar, scanner, client):
     known = False
     marker_position = None
     marker_detector = MarkerDetector(lidar)
@@ -273,6 +273,10 @@ async def search(uav, lidar, scanner):
                     sort_marker_list = [x for _, x in sorted(zip(found_marker_spad_list, found_marker_list),
                                                              key=lambda x: x[0],
                                                              reverse=True)]
+                    best_marker = sort_marker_list[0]
+                    lat = best_marker[0]
+                    lon = best_marker[1]
+                    client.update_location(lat, lon)
             await fly_to_position(uav, waypoint)
     
     return sort_marker_list
@@ -286,6 +290,8 @@ async def search(uav, lidar, scanner):
 
 async def main():
 
+    client = TelemetryClient(server_ip = "127.0.0.1", server_port = 5000)
+    client.start()
     # Connect UAV
     uav = await UAV.connect(use_sim=True)
 
@@ -312,7 +318,7 @@ async def main():
     scanner_task = asyncio.create_task(scanner.continuous_scan())
 
     # Execute search mission
-    marker_list = await search(uav, lidar, scanner)
+    marker_list = await search(uav, lidar, scanner, client)
 
     print("\nMission complete.")
     print("Found markers at the following positions sort by SPAD:")
@@ -333,6 +339,8 @@ async def main():
     await asyncio.sleep(2)
 
     await uav.land()
+    
+    client.stop()
 
 
 if __name__ == "__main__":
