@@ -1,5 +1,5 @@
 import pigpio
-import keyboard
+#import keyboard
 import time
 import sys
 
@@ -57,8 +57,9 @@ def main():
             """
         for gpio in range(2, 28):
             pi.write(gpio, 0)
-        j = 0
+        j = 6
         pi.write(pin[j], 1)
+        #pi.set_servo_pulsewidth(j, 1000)
         print(f"pin name: {pin_name[j]} pin_phys: {pysical_pin[j]}")
             
     except KeyboardInterrupt:
