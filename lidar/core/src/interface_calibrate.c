@@ -41,7 +41,7 @@ void powerON(void)
     sleep_ms(50);
     digitalWrite(LPn, LOW);
     digitalWrite(PWR_EN, LOW);
-    sleep_ms(100);
+    sleep_ms(300);
     digitalWrite(PWR_EN, HIGH);
     sleep_ms(50);
     digitalWrite(LPn, HIGH);
