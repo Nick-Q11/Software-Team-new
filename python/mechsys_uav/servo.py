@@ -80,7 +80,7 @@ class Scanner:
 
         return measurements
 
-    async def scan(self):
+    async def scan(self):  # for waypoints search
         """
         Main scan function.
 
@@ -97,6 +97,40 @@ class Scanner:
             pitch_values=[-90, -45, 0],
             dwell_s=0.5,
         )
+
+    async def scan_stream(self):  # for waypoints search only
+        """
+        Stream scan positions as soon as each servo position has settled.
+        """
+
+        yaw_values = [-90, 0, 90]
+        pitch_values = [-90, -45, 0]
+        dwell_s = 0.5
+
+        pitch_rows = sorted(pitch_values, reverse=True)
+
+        for row_idx, pitch in enumerate(pitch_rows):
+
+            self.pitch.set_angle(90 + pitch)
+
+            await asyncio.sleep(dwell_s)
+
+            row_yaws = (
+                yaw_values
+                if row_idx % 2 == 0
+                else yaw_values[::-1]
+            )
+
+            for yaw in row_yaws:
+
+                self.yaw.set_angle(90 + yaw)
+
+                await asyncio.sleep(dwell_s)
+
+                yield {
+                    "yaw": yaw,
+                    "pitch": pitch,
+                }
 
     async def continuous_scan(
             self,
