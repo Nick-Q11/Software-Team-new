@@ -16,6 +16,8 @@ sys.path.append(str(BASE_DIR))
 from lidar_interface.wrapper import LidarSensor
 
 
+
+
 async def vibration_test(lidar_sensor: LidarSensor):   
     zone_d = 64
     closest_distance = 5000 # 3m als default-Wert
@@ -77,7 +79,10 @@ async def main():
     await asyncio.sleep(5)
     await uav.send_goal_position(latitude=position[0], longitude=position[1], relative_altitude=position[2])
 """
-    
+    pi = pigpio.pi()
+    pi.set_mode(19, pigpio.OUTPUT)
+    await asyncio.sleep(1)
+    pi.write(19, 1)
     lidar_sensor = LidarSensor()
     if lidar_sensor.init_and_calibrate() != 0:
         print("Kritischer Fehler: Sensor-Kalibrierung fehlgeschlagen!")
