@@ -169,7 +169,18 @@ async def scan(
 
     await asyncio.sleep(2)
 
-    measurements_1 = await scanner.scan()
+    measurements_1 = []
+
+    async for measurement in scanner.scan_stream():
+
+        detection = detector.detect()
+
+        measurements_1.append(
+            {
+                "measurement": measurement,
+                "detection": detection,
+            }
+        )
 
     await asyncio.sleep(1)
 
@@ -192,7 +203,18 @@ async def scan(
 
     await asyncio.sleep(2)
 
-    measurements_2 = await scanner.scan()
+    measurements_2 = []
+
+    async for measurement in scanner.scan_stream():
+    
+        detection = detector.detect()
+    
+        measurements_2.append(
+            {
+                "measurement": measurement,
+                "detection": detection,
+            }
+        )
 
     await asyncio.sleep(1)
 
