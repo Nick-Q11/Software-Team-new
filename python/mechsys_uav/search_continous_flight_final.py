@@ -125,7 +125,7 @@ async def fly_to_position(
         
         if current_position is None:
             print("Verbindung zum UAV während des Fluges verloren!")
-            break
+            return False
 
         if marker_detector is not None and marker_callback is not None:
             marker = await detect_marker(marker_detector)
