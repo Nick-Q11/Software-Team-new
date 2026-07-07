@@ -75,24 +75,28 @@ async def takeoff(uav,
 
     if not accepted:
         print("Takeoff wurde vom UAV abgelehnt!")
+        
         return False
     
     while accepted:
 
         await asyncio.sleep(0.1)
-        
+    
         position = uav.get_position()
+    
         if position is None:
             print("Verbindung zum UAV während des Takeoffs verloren!")
-            break
-        
+            
+            return False
+    
         print(f"Altitude: {position[2]:.2f} m")
-
+    
         if position[2] >= takeoff_altitude - vertical_uncertainity:
             print("Reached takeoff altitude.")
-            break
-        
-        return True
+            
+            return True
+
+
 
 
 async def fly_to_position(
@@ -126,7 +130,7 @@ async def fly_to_position(
         if marker_detector is not None and marker_callback is not None:
             marker = await detect_marker(marker_detector)
             if marker:
-                stop_point = current_position
+                stop_point = tuple(current_position)
                 attitude = uav.get_attitude()
                 handled = marker_callback(marker, stop_point, attitude)
 
@@ -273,6 +277,7 @@ async def search(uav, lidar, scanner, client):
         nonlocal known, marker_position, sort_marker_list
 
         print(f"Marker detected in zone {marker.zone} with SPAD {marker.spad}")
+        
         known = check_marker(marker, found_marker_list, stop_point, attitude, scanner)
            
         if known:
@@ -281,7 +286,9 @@ async def search(uav, lidar, scanner, client):
             
         else:
             await fly_to_position(uav, stop_point,)
+            
             marker_position, marker_spad = await fly_to_marker(uav, lidar, scanner, stop_point)
+            
             if marker_position is not None:
                 found_marker_list.append(marker_position)
                 found_marker_spad_list.append(marker_spad)
@@ -314,16 +321,6 @@ async def search(uav, lidar, scanner, client):
             marker_callback=handle_marker,
         )
         
-        marker = await detect_marker(marker_detector)
-        await asyncio.sleep(0.1)
-        
-        if marker:
-            stop_point = uav.get_position()
-            attitude = uav.get_attitude()
-            handled = await handle_marker(marker, stop_point, attitude)
-
-            if handled:
-                await fly_to_position(uav, waypoint)
     
     return sort_marker_list
             
