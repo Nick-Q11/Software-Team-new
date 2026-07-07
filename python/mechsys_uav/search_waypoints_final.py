@@ -135,6 +135,7 @@ async def fly_to_position(
 async def scan(
     uav,
     scanner,
+    detector,
     waypoint,
 ):
     """
@@ -319,43 +320,50 @@ async def search(
             print(
                 "Skipping waypoint."
             )
-
             continue
 
         measurements = await scan(
             uav,
             scanner,
+            marker_detector,     
             waypoint,
         )
 
         if not measurements:
             continue
 
-        detection = marker_detector.detect()
+        marker_found = False
 
-        if detection is None:
+        for result in measurements:
+
+            detection = result["detection"]
+
+            if detection is None:
+                continue
+
+            marker_found = True
+
+            print(
+                f"\nMarker detected in zone "
+                f"{detection.zone}"
+            )
+
+            reached_marker = await fly_to_marker(
+                uav,
+                detection,
+                result["measurement"],
+                lidar_to_gps,
+            )
+
+            await return_home(
+                uav,
+                home_position,
+            )
+
+            return reached_marker
+
+        if not marker_found:
             print("No marker returned by detector.")
-            continue
-
-        print(
-            f"\nMarker detected in zone "
-            f"{detection.zone}"
-        )
-
-        reached_marker = await fly_to_marker(
-            uav,
-            detection,
-            measurements[-1],
-            lidar_to_gps,
-        )
-
-        await return_home(
-            uav,
-            home_position,
-        )
-
-        return reached_marker
-
 
     print(
         "\nSearch completed."
