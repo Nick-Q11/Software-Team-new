@@ -33,9 +33,9 @@ void powerON(void)
 {
     int status = wiringPiSetupPhys(); // Initialize wiringPi library
     failure(status, "Failed to initialize wiringPi");
-    /*pinMode(SPI_I2C_N, OUTPUT);
+    pinMode(SPI_I2C_N, OUTPUT);
     digitalWrite(SPI_I2C_N, HIGH);
-    sleep_ms(50);*/
+    sleep_ms(50);
     pinMode(LPn, OUTPUT);
     pinMode(PWR_EN, OUTPUT);
     sleep_ms(50);
@@ -46,6 +46,20 @@ void powerON(void)
     sleep_ms(50);
     digitalWrite(LPn, HIGH);
     sleep_ms(250);
+}
+
+void resetSensor(void)
+{
+    pinMode(CS, OUTPUT);
+    pinMode(SPI_I2C_N, OUTPUT);
+    digitalWrite(CS, HIGH);
+    sleep_ms(10);
+    digitalWrite(SPI_I2C_N, HIGH);
+    sleep_ms(5);
+    digitalWrite(CS, LOW);
+    sleep_ms(1);
+    digitalWrite(CS, HIGH);
+    sleep_ms(10);
 }
 
 
@@ -63,6 +77,12 @@ int calibrate(VL53L8CX_calibrate *calib)
     calib->data_is_ready = (uint8_t*)malloc(sizeof(uint8_t));
 
     status = vl53l8cx_init(&calib->conf);
+    while(status != 0 && i > 0){
+        resetSensor();
+        status = vl53l8cx_init(&calib->conf);
+        i--;
+    }
+    i = 20;
     failure(status, "Failed to initialize VL53L8CX sensor");
 
     status = vl53l8cx_set_resolution(&calib->conf, calib->resolution);
